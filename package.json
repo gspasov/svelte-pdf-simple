@@ -1,8 +1,17 @@
 {
-  "name": "svelte-app",
+  "name": "svelte-pdf-simple",
   "version": "1.0.0",
-  "description": "Simple pdf viewer library for Svelte using Mozilla's PDF.js",
+  "description": "Svelte component for displaying PDF files easily",
   "main": "src/index.js",
+  "svelte": "src/index.js",
+  "types": "src/index.d.ts",
+  "files": [
+    "src/index.js",
+    "src/pdfViewer.svelte",
+    "src/index.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",
@@ -32,13 +41,13 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/gspasov/svelte-simple-pdf"
+    "url": "https://github.com/gspasov/svelte-pdf-simple"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/gspasov/svelte-simple-pdf/issues"
+    "url": "https://github.com/gspasov/svelte-pdf-simple/issues"
   },
-  "homepage": "https://github.com/gspasov/svelte-simple-pdf#readme",
+  "homepage": "https://github.com/gspasov/svelte-pdf-simple#readme",
   "keywords": [
     "pdf",
     "svelte-pdf",
@@ -48,6 +57,7 @@
     "pdf-viewer",
     "svelte-pdf-viewer",
     "svelte-simple-pdf",
+    "svelte-pdf-simple",
     "pdf-print",
     "pdf-zoom",
     "pdf-rotation",

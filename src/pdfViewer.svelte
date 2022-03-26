@@ -4,7 +4,6 @@
     getDocument,
     GlobalWorkerOptions,
   } from "pdfjs-dist";
-
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
 
@@ -34,13 +33,10 @@
 
   const dispatch = createEventDispatcher();
 
-  // GlobalWorkerOptions.workerSrc =
-  //   "//unpkg.com/pdfjs-dist@2.12.313/legacy/build/pdf.worker.min.js";
-  GlobalWorkerOptions.workerSrc = "/pdfWorker.min.js";
+  GlobalWorkerOptions.workerSrc =
+    "//unpkg.com/pdfjs-dist@2.12.313/legacy/build/pdf.worker.min.js";
 
-  onMount(async () => {
-    await initialPdfLoad();
-  });
+  onMount(async () => await initialPdfLoad());
 
   async function renderPage(pageNumber: number): Promise<void> {
     pdfDoc.getPage(pageNumber).then((page_) => {
@@ -64,7 +60,7 @@
       })
       .catch((e: unknown) => {
         pdfLoadedSucessfully = false;
-        console.error(e);
+        console.error("Pdfjs failed to load with:", JSON.stringify(e));
       })
       .finally(() => {
         pdfIsLoading = false;
