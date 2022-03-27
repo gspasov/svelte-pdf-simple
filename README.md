@@ -1,6 +1,5 @@
-# svelte-pdf
+# svelte-pdf-simple
 
-[![MadeWithSvelte.com shield](https://madewithsvelte.com/storage/repo-shields/2346-shield.svg)](https://madewithsvelte.com/p/svelte-pdf/shield-link)
 ![npm](https://img.shields.io/npm/dw/svelte-pdf-simple?style=flat-square)
 ![npm](https://img.shields.io/npm/v/svelte-pdf-simple?style=flat-square)
 
