@@ -1,7 +1,7 @@
 # svelte-pdf-simple
 
-![npm](https://img.shields.io/npm/dw/svelte-pdf-simple?style=flat-square)
 ![npm](https://img.shields.io/npm/v/svelte-pdf-simple?style=flat-square)
+![npm](https://img.shields.io/npm/dw/svelte-pdf-simple?style=flat-square)
 
 Simple svelte PDF Viewer component where controls are left to be added by the User.
 This Simple PDF Viewer does not assume any functionality, so Users can customize it as they see fit.
