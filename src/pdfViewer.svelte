@@ -72,13 +72,7 @@
 </script>
 
 {#if pdfLoadedSucessfully && !pdfIsLoading}
-  {#if style.length > 0}
-    <div {style}>
-      <canvas class="simple-pdf-svelte-canvas" bind:this={canvas} />
-    </div>
-  {:else}
-    <canvas class="simple-pdf-svelte-canvas" bind:this={canvas} />
-  {/if}
+  <canvas {style} class="simple-pdf-svelte-canvas" bind:this={canvas} />
 {:else if pdfIsLoading}
   <slot name="loading" />
 {:else}
