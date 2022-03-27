@@ -21,7 +21,7 @@ yarn add svelte-pdf-simple
 
 ## How to use
 
-```ts
+```svelte
 <script lang="ts">
   import PdfViewer from "svelte-pdf-simple";
 </script>
@@ -31,7 +31,7 @@ yarn add svelte-pdf-simple
 
 ## Full example with handling navigation and load state
 
-```ts
+```svelte
 <script lang="ts">
   import PdfViewer from "svelte-pdf-simple";
 
