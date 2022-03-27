@@ -8,7 +8,8 @@
   import { createEventDispatcher } from "svelte";
 
   export let page: number = 1;
-  export let pdf: string;
+  export let pdfUrl: string | undefined = undefined;
+  export let pdfBin: string | undefined = undefined;
   export let scale: number = 1.0;
   export let rotation: number = 0;
   export let offsetX: number = 0;
@@ -37,7 +38,14 @@
   GlobalWorkerOptions.workerSrc =
     "//unpkg.com/pdfjs-dist@2.12.313/legacy/build/pdf.worker.min.js";
 
-  onMount(async () => await initialPdfLoad());
+  onMount(async () => {
+    if (pdfUrl === undefined && pdfBin === undefined) {
+      throw new Error(
+        "PdfViewer failed to display with error: 'No pdf source provided'"
+      );
+    }
+    await initialPdfLoad();
+  });
 
   async function renderPage(pageNumber: number): Promise<void> {
     pdfDoc.getPage(pageNumber).then((page_) => {
@@ -53,7 +61,10 @@
   }
 
   async function initialPdfLoad(): Promise<void> {
-    await getDocument({ url: pdf })
+    await getDocument({
+      ...(pdfUrl && { url: pdfUrl }),
+      ...(pdfBin && { data: pdfBin }),
+    })
       .promise.then((doc) => {
         pdfLoadedSucessfully = true;
         dispatch("loaded", { pages: doc.numPages });
