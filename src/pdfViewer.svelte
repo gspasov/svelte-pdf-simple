@@ -13,6 +13,7 @@
   export let rotation: number = 0;
   export let offsetX: number = 0;
   export let offsetY: number = 0;
+  export let style: string = "";
   export const next = (): void => {
     if (page === pdfDoc.numPages) return;
     page++;
@@ -52,7 +53,7 @@
   }
 
   async function initialPdfLoad(): Promise<void> {
-    await getDocument(pdf)
+    await getDocument({ url: pdf })
       .promise.then((doc) => {
         pdfLoadedSucessfully = true;
         dispatch("loaded", { pages: doc.numPages });
@@ -71,7 +72,13 @@
 </script>
 
 {#if pdfLoadedSucessfully && !pdfIsLoading}
-  <canvas bind:this={canvas} />
+  {#if style.length > 0}
+    <div {style}>
+      <canvas class="simple-pdf-svelte-canvas" bind:this={canvas} />
+    </div>
+  {:else}
+    <canvas class="simple-pdf-svelte-canvas" bind:this={canvas} />
+  {/if}
 {:else if pdfIsLoading}
   <slot name="loading" />
 {:else}
