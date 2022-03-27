@@ -1,109 +1,149 @@
-*Psst — looking for a more complete solution? Check out [SvelteKit](https://kit.svelte.dev), the official framework for building web applications of all sizes, with a beautiful development experience and flexible filesystem-based routing.*
+# svelte-pdf
 
-*Looking for a shareable component template instead? You can [use SvelteKit for that as well](https://kit.svelte.dev/docs#packaging) or the older [sveltejs/component-template](https://github.com/sveltejs/component-template)*
+[![MadeWithSvelte.com shield](https://madewithsvelte.com/storage/repo-shields/2346-shield.svg)](https://madewithsvelte.com/p/svelte-pdf/shield-link)
+![npm](https://img.shields.io/npm/dw/svelte-pdf-simple?style=flat-square)
+![npm](https://img.shields.io/npm/v/svelte-pdf-simple?style=flat-square)
 
----
+Simple svelte PDF Viewer component where controls are left to be added by the User.
+This Simple PDF Viewer does not assume any functionality, so Users can customize it as they see fit.
 
-# svelte app
+## How to install
 
-This is a project template for [Svelte](https://svelte.dev) apps. It lives at https://github.com/sveltejs/template.
+```
+npm install svelte-pdf-simple
+```
 
-To create a new project based on this template using [degit](https://github.com/Rich-Harris/degit):
+or
+
+```
+yarn add svelte-pdf-simple
+```
+
+## How to use
+
+```ts
+<script lang="ts">
+  import PdfViewer from "svelte-pdf-simple";
+</script>
+
+<PdfViewer pdf={"./example.pdf"}>
+```
+
+## Full example with handling navigation and load state
+
+```ts
+<script lang="ts">
+  import PdfViewer from "svelte-pdf-simple";
+
+  let pdfViewer: PdfViewer;
+  let pageNumber = 0;
+  let totalPages = 0;
+  let isPdfLoaded = false;
+
+  function handleNextPage(): void {
+    pdfViewer.next();
+  }
+
+  function handlePrevPage(): void {
+    pdfViewer.prev();
+  }
+
+  function handlePdfLoaded(event: CustomEvent<{ pages: number }>) {
+    totalPages = event.detail.pages;
+    pageNumber = 1;
+    isPdfLoaded = true;
+  }
+</script>
+
+<main>
+  {#if isPdfLoaded}
+    <button on:click={handlePrevPage}>prev</button>
+    <button on:click={handleNextPage}>next</button>
+    <span>{pageNumber}/{totalPages}</span>
+  {/if}
+  <PdfViewer
+    bind:this={pdfViewer}
+    pdf={"./example.pdf"}
+    scale={1.5}
+    style={"border: 1px solid black; display: block;"}
+    on:loaded={handlePdfLoaded}
+    on:next={() => pageNumber++}
+    on:prev={() => pageNumber--}
+  >
+    <div slot="loading">Loading pdf..</div>
+    <div slot="loading-failed">Well... something went wrong :(</div>
+  </PdfViewer>
+</main>
+```
+
+## Props
+
+| property   | type     | default | Required |
+| ---------- | -------- | ------- | -------- |
+| `pdf`      | `string` | `N/A`   | `Yes`    |
+| `scale`    | `float`  | `1.0`   | `No`     |
+| `page`     | `number` | `1`     | `No`     |
+| `rotation` | `number` | `0`     | `No`     |
+| `offsetX`  | `number` | `0`     | `No`     |
+| `offsetY`  | `number` | `0`     | `No`     |
+| `style`    | `string` | `""`    | `No`     |
+
+The `pdf` property accepts either a path to file (_located in `/public` folder of your Svelte project_), or a url leading to the pdf (_there are some specifics to this, please read more in [Using PDFs from links](#using-pdfs-from-links)_)
+
+## Handling
+
+| function | usage               |
+| -------- | ------------------- |
+| `next`   | `move to next page` |
+| `prev`   | `move to prev page` |
+
+## Dispatch Events
+
+| event    | usage                                   |
+| -------- | --------------------------------------- |
+| `next`   | `callback on page move forward`         |
+| `prev`   | `callback on page move backward`        |
+| `loaded` | `callback when pdf is loaded on screen` |
+
+## Demo example
+
+An example usage could be found in the `/example` directory in the project. It provides a simple way to handle page navigation and page count.
+
+To view the example, clone the **svelte-pdf-simple** repo and install the dependencies:
 
 ```bash
-npx degit sveltejs/template svelte-app
-cd svelte-app
+$ git clone https://github.com/gspasov/svelte-pdf-simple.git
+$ cd example
+$ npm install
+$ npm run dev
 ```
 
-*Note that you will need to have [Node.js](https://nodejs.org) installed.*
+## Using PDFs from links
 
+Bare in mind that the `pdf.js` library enforces `cors`, therefore if you whish to supply a PDF which is coming from a link, the server serving this pdf should have appropriate CORS settings in the headers. For more information about this please follow [this issue in pdf.js](https://github.com/mozilla/pdf.js/issues/3150#issuecomment-17582371)
 
-## Get started
+For example, if you are hosting your pds in AWS S3, the following CORS setting work:
 
-Install the dependencies...
-
-```bash
-cd svelte-app
-npm install
+```json
+[
+  {
+    "AllowedHeaders": ["Authorization", "Range"],
+    "AllowedMethods": ["GET"],
+    "AllowedOrigins": ["*"], // supply custom origin
+    "ExposeHeaders": [
+      "Accept-Ranges",
+      "Content-Range",
+      "Content-Encoding",
+      "Content-Length"
+    ]
+  }
+]
 ```
 
-...then start [Rollup](https://rollupjs.org):
+## Contributing
 
-```bash
-npm run dev
-```
+If you would like to see some change/modification open an Issue or a PR. I'd be happy to look into it.
 
-Navigate to [localhost:8080](http://localhost:8080). You should see your app running. Edit a component file in `src`, save it, and reload the page to see your changes.
+## License
 
-By default, the server will only respond to requests from localhost. To allow connections from other computers, edit the `sirv` commands in package.json to include the option `--host 0.0.0.0`.
-
-If you're using [Visual Studio Code](https://code.visualstudio.com/) we recommend installing the official extension [Svelte for VS Code](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode). If you are using other editors you may need to install a plugin in order to get syntax highlighting and intellisense.
-
-## Building and running in production mode
-
-To create an optimised version of the app:
-
-```bash
-npm run build
-```
-
-You can run the newly built app with `npm run start`. This uses [sirv](https://github.com/lukeed/sirv), which is included in your package.json's `dependencies` so that the app will work when you deploy to platforms like [Heroku](https://heroku.com).
-
-
-## Single-page app mode
-
-By default, sirv will only respond to requests that match files in `public`. This is to maximise compatibility with static fileservers, allowing you to deploy your app anywhere.
-
-If you're building a single-page app (SPA) with multiple routes, sirv needs to be able to respond to requests for *any* path. You can make it so by editing the `"start"` command in package.json:
-
-```js
-"start": "sirv public --single"
-```
-
-## Using TypeScript
-
-This template comes with a script to set up a TypeScript development environment, you can run it immediately after cloning the template with:
-
-```bash
-node scripts/setupTypeScript.js
-```
-
-Or remove the script via:
-
-```bash
-rm scripts/setupTypeScript.js
-```
-
-If you want to use `baseUrl` or `path` aliases within your `tsconfig`, you need to set up `@rollup/plugin-alias` to tell Rollup to resolve the aliases. For more info, see [this StackOverflow question](https://stackoverflow.com/questions/63427935/setup-tsconfig-path-in-svelte).
-
-## Deploying to the web
-
-### With [Vercel](https://vercel.com)
-
-Install `vercel` if you haven't already:
-
-```bash
-npm install -g vercel
-```
-
-Then, from within your project folder:
-
-```bash
-cd public
-vercel deploy --name my-project
-```
-
-### With [surge](https://surge.sh/)
-
-Install `surge` if you haven't already:
-
-```bash
-npm install -g surge
-```
-
-Then, from within your project folder:
-
-```bash
-npm run build
-surge public my-project.surge.sh
-```
+**MIT**
