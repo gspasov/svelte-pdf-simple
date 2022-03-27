@@ -3,6 +3,6 @@
   "compilerOptions": {
     "strict": true
   },
-  "include": ["src/**/*", "src/pdfWorker.min.js"],
-  "exclude": ["node_modules/*", "__sapper__/*", "public/*"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules/*", "public/*"]
 }
