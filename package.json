@@ -1,6 +1,6 @@
 {
   "name": "svelte-pdf-simple",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Svelte component for displaying PDF files easily",
   "main": "src/index.js",
   "svelte": "src/index.js",
