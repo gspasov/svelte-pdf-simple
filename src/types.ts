@@ -6,10 +6,10 @@ export type PdfPageContent = {
 };
 
 export type PdfLoaded = {
-  loaded: PdfLoadedPayload;
+  loaded: PdfLoadedContent;
 };
 
-export type PdfLoadedPayload = {
+export type PdfLoadedContent = {
   pages: number;
 } & PdfPageContent;
 

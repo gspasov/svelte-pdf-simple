@@ -1,6 +1,6 @@
 <script lang="ts">
   import PdfViewer from "./pdfViewer.svelte";
-  import type { PdfLoaded, PdfLoadedPayload, PdfPageContent } from "./types";
+  import type { PdfLoadedContent, PdfPageContent } from "./types";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;
@@ -45,7 +45,7 @@
     pdfViewer.prev();
   }
 
-  function handlePdfLoaded(event: CustomEvent<PdfLoadedPayload>) {
+  function handlePdfLoaded(event: CustomEvent<PdfLoadedContent>) {
     console.info("loaded", event.detail);
     totalPages = event.detail.pages;
     pageNumber = 1;

@@ -1,9 +1,8 @@
 <script lang="ts">
   import {
-    NextPage,
-    PdfLoadedPayload,
+    PdfPageContent,
     PdfViewer,
-    PrevPage,
+    PdfLoadedContent,
   } from "svelte-pdf-simple";
 
   let pdfViewer: PdfViewer;
@@ -31,12 +30,12 @@
       "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G"
   );
 
-  function handleNextPage(event: CustomEvent<NextPage>): void {
+  function handleNextPage(event: CustomEvent<PdfPageContent>): void {
     console.info("next", event.detail);
     pageNumber++;
   }
 
-  function handlePrevPage(event: CustomEvent<PrevPage>): void {
+  function handlePrevPage(event: CustomEvent<PdfPageContent>): void {
     console.info("prev", event.detail);
     pageNumber--;
   }
@@ -49,7 +48,7 @@
     pdfViewer.prev();
   }
 
-  function handlePdfLoaded(event: CustomEvent<PdfLoadedPayload>) {
+  function handlePdfLoaded(event: CustomEvent<PdfLoadedContent>) {
     console.info("pdf loaded", event.detail);
     totalPages = event.detail.pages;
     pageNumber = 1;

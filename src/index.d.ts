@@ -4,13 +4,13 @@ import {
   PdfLoaded,
   PdfPageContent,
   PrevPage,
-  PdfLoadedPayload,
+  PdfLoadedContent,
 } from "./types";
 export {
   PdfViewer,
   PdfPageContent,
   PdfLoaded,
-  PdfLoadedPayload,
+  PdfLoadedContent,
   NextPage,
   PrevPage,
 };
