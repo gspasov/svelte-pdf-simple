@@ -1,11 +1,13 @@
 <script lang="ts">
   import PdfViewer from "./pdfViewer.svelte";
+  import type { PdfLoaded, PdfLoadedPayload, PdfPageContent } from "./types";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;
   let totalPages = 0;
   let isPdfLoaded = false;
 
+  const pdfPathWithForm = "./formExample.pdf";
   const pdfUrl =
     "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/examples/learning/helloworld.pdf";
   const pdfPath = "./example.pdf";
@@ -25,15 +27,26 @@
       "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G"
   );
 
-  function handleNextPage(): void {
+  function handleNextPage(event: CustomEvent<PdfPageContent>): void {
+    console.info("next", event.detail);
+    pageNumber++;
+  }
+
+  function handlePrevPage(event: CustomEvent<PdfPageContent>): void {
+    console.info("prev", event.detail);
+    pageNumber--;
+  }
+
+  function onNextPage(): void {
     pdfViewer.next();
   }
 
-  function handlePrevPage(): void {
+  function onPrevPage(): void {
     pdfViewer.prev();
   }
 
-  function handlePdfLoaded(event: CustomEvent<{ pages: number }>) {
+  function handlePdfLoaded(event: CustomEvent<PdfLoadedPayload>) {
+    console.info("loaded", event.detail);
     totalPages = event.detail.pages;
     pageNumber = 1;
     isPdfLoaded = true;
@@ -42,8 +55,8 @@
 
 <main>
   {#if isPdfLoaded}
-    <button on:click={handlePrevPage}>prev</button>
-    <button on:click={handleNextPage}>next</button>
+    <button on:click={onPrevPage}>prev</button>
+    <button on:click={onNextPage}>next</button>
     <span>{pageNumber}/{totalPages}</span>
   {/if}
   <div class="wrapper">
@@ -52,9 +65,11 @@
       pdfUrl={pdfPath}
       scale={1.5}
       style={"border: 1px solid black; display: block;"}
+      withAnnotations={true}
+      withTextContent={true}
       on:loaded={handlePdfLoaded}
-      on:next={() => pageNumber++}
-      on:prev={() => pageNumber--}
+      on:next={handleNextPage}
+      on:prev={handlePrevPage}
     >
       <div slot="loading">Loading pdf..</div>
       <div slot="loading-failed">Well... something went wrong :(</div>

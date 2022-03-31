@@ -26,6 +26,6 @@
   },
   "dependencies": {
     "sirv-cli": "^2.0.0",
-    "svelte-pdf-simple": "^1.0.3"
+    "svelte-pdf-simple": "file:./../../svelte-pdf-simple"
   }
 }

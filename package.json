@@ -37,7 +37,7 @@
     "typescript": "^4.0.0"
   },
   "dependencies": {
-    "pdfjs-dist": "2.12.313"
+    "pdfjs-dist": "2.13.216"
   },
   "repository": {
     "type": "git",
