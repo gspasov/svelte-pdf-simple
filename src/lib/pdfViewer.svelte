@@ -1,9 +1,6 @@
 <script lang="ts">
-  import {
-    PDFDocumentProxy,
-    getDocument,
-    GlobalWorkerOptions,
-  } from "pdfjs-dist";
+  import type { PDFDocumentProxy } from "pdfjs-dist";
+  import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
   import type { TextContent } from "pdfjs-dist/types/src/display/api";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
@@ -50,17 +47,12 @@
 
   onMount(async () => {
     if (pdfUrl === undefined && pdfBin === undefined) {
-      throw new Error(
-        "PdfViewer failed to initialize with error: 'No pdf source provided'"
-      );
+      throw new Error("PdfViewer failed to initialize with error: 'No pdf source provided'");
     }
     await initialPdfLoad();
   });
 
-  async function renderPage(
-    doc: PDFDocumentProxy,
-    pageNumber: number
-  ): Promise<PdfPageContent> {
+  async function renderPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPageContent> {
     const pdfPage = await doc.getPage(pageNumber);
 
     const viewport = pdfPage.getViewport({ scale, rotation, offsetX, offsetY });

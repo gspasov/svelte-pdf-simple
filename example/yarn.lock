@@ -827,8 +827,8 @@ svelte-check@^2.0.0:
     svelte-preprocess "^4.0.0"
     typescript "*"
 
-"svelte-pdf-simple@file:./../../svelte-pdf-simple":
-  version "1.0.3"
+"svelte-pdf-simple@file:./../package":
+  version "1.0.5"
   dependencies:
     pdfjs-dist "2.13.216"
 

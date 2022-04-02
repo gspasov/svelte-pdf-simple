@@ -1,6 +1,6 @@
 <script lang="ts">
-  import PdfViewer from "./pdfViewer.svelte";
-  import type { PdfLoadedContent, PdfPageContent } from "./types";
+  import PdfViewer from "$lib/pdfViewer.svelte";
+  import type { PdfLoadedContent, PdfPageContent } from "$lib/types";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;
@@ -24,7 +24,7 @@
       "ZG9iagoKeHJlZgowIDYKMDAwMDAwMDAwMCA2NTUzNSBmIAowMDAwMDAwMDEwIDAwMDAwIG4g" +
       "CjAwMDAwMDAwNzkgMDAwMDAgbiAKMDAwMDAwMDE3MyAwMDAwMCBuIAowMDAwMDAwMzAxIDAw" +
       "MDAwIG4gCjAwMDAwMDAzODAgMDAwMDAgbiAKdHJhaWxlcgo8PAogIC9TaXplIDYKICAvUm9v" +
-      "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G"
+      "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G",
   );
 
   function handleNextPage(event: CustomEvent<PdfPageContent>): void {

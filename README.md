@@ -57,54 +57,54 @@ With `Base64` encoded string:
 
 ```svelte
 <script lang="ts">
-  import { PdfViewer, PdfPageContent, PdfLoadedContent } from "svelte-pdf-simple";
+	import { PdfViewer, PdfPageContent, PdfLoadedContent } from "svelte-pdf-simple";
 
-  let pdfViewer: PdfViewer;
-  let pageNumber = 0;
-  let totalPages = 0;
-  let isPdfLoaded = false;
+	let pdfViewer: PdfViewer;
+	let pageNumber = 0;
+	let totalPages = 0;
+	let isPdfLoaded = false;
 
-  function onNextPage(): void {
-    pdfViewer.next();
-  }
+	function onNextPage(): void {
+		pdfViewer.next();
+	}
 
-  function onPrevPage(): void {
-    pdfViewer.prev();
-  }
+	function onPrevPage(): void {
+		pdfViewer.prev();
+	}
 
-  function handleNextPage(event: CustomEvent<PdfPageContent>): void {
-    pageNumber++;
-  }
+	function handleNextPage(event: CustomEvent<PdfPageContent>): void {
+		pageNumber++;
+	}
 
-  function handlePrevPage(event: CustomEvent<PdfPageContent>): void {
-    pageNumber--;
-  }
+	function handlePrevPage(event: CustomEvent<PdfPageContent>): void {
+		pageNumber--;
+	}
 
-  function handlePdfLoaded(event: CustomEvent<PdfLoadedContent>): void {
-    totalPages = event.detail.pages;
-    pageNumber = 1;
-    isPdfLoaded = true;
-  }
+	function handlePdfLoaded(event: CustomEvent<PdfLoadedContent>): void {
+		totalPages = event.detail.pages;
+		pageNumber = 1;
+		isPdfLoaded = true;
+	}
 </script>
 
 <main>
-  {#if isPdfLoaded}
-    <button on:click={onPrevPage}>prev</button>
-    <button on:click={onNextPage}>next</button>
-    <span>{pageNumber}/{totalPages}</span>
-  {/if}
-  <PdfViewer
-    bind:this={pdfViewer}
-    pdfUrl={"./example.pdf"}
-    scale={1.5}
-    style={"border: 1px solid black; display: block;"}
-    on:loaded={handlePdfLoaded}
-    on:next={handleNextPage}
-    on:prev={handlePrevPage}
-  >
-    <div slot="loading">Loading pdf..</div>
-    <div slot="loading-failed">Well... something went wrong :(</div>
-  </PdfViewer>
+	{#if isPdfLoaded}
+		<button on:click={onPrevPage}>prev</button>
+		<button on:click={onNextPage}>next</button>
+		<span>{pageNumber}/{totalPages}</span>
+	{/if}
+	<PdfViewer
+		bind:this={pdfViewer}
+		pdfUrl={"./example.pdf"}
+		scale={1.5}
+		style={"border: 1px solid black; display: block;"}
+		on:loaded={handlePdfLoaded}
+		on:next={handleNextPage}
+		on:prev={handlePrevPage}
+	>
+		<div slot="loading">Loading pdf..</div>
+		<div slot="loading-failed">Well... something went wrong :(</div>
+	</PdfViewer>
 </main>
 ```
 
@@ -161,17 +161,12 @@ For example, if you are hosting your pds in AWS S3, the following CORS setting w
 
 ```json
 [
-  {
-    "AllowedHeaders": ["Authorization", "Range"],
-    "AllowedMethods": ["GET"],
-    "AllowedOrigins": ["*"], // supply custom origin
-    "ExposeHeaders": [
-      "Accept-Ranges",
-      "Content-Range",
-      "Content-Encoding",
-      "Content-Length"
-    ]
-  }
+	{
+		"AllowedHeaders": ["Authorization", "Range"],
+		"AllowedMethods": ["GET"],
+		"AllowedOrigins": ["*"], // supply custom origin
+		"ExposeHeaders": ["Accept-Ranges", "Content-Range", "Content-Encoding", "Content-Length"]
+	}
 ]
 ```
 
