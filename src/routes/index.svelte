@@ -1,12 +1,18 @@
 <script lang="ts">
-  import PdfViewer from "$lib/pdfViewer.svelte";
-  import type { PdfLoadedContent, PdfPageContent } from "$lib/types";
+  import { PdfViewer } from "svelte-pdf-simple";
+  import type {
+    PdfLoadFailureContent,
+    PdfLoadSuccessContent,
+    PdfPageContent,
+  } from "svelte-pdf-simple";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;
   let totalPages = 0;
   let isPdfLoaded = false;
+  let password = "";
 
+  const pdfPathWithPassword = "./exampleProtected.pdf";
   const pdfPathWithForm = "./formExample.pdf";
   const pdfUrl =
     "https://raw.githubusercontent.com/mozilla/pdf.js/ba2edeae/examples/learning/helloworld.pdf";
@@ -45,11 +51,15 @@
     pdfViewer.prev();
   }
 
-  function handlePdfLoaded(event: CustomEvent<PdfLoadedContent>) {
+  function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccessContent>) {
     console.info("loaded", event.detail);
     totalPages = event.detail.pages;
     pageNumber = 1;
     isPdfLoaded = true;
+  }
+
+  function handleLoadFailure(event: CustomEvent<PdfLoadFailureContent>) {
+    console.info("failed", event.detail);
   }
 </script>
 
@@ -59,26 +69,24 @@
     <button on:click={onNextPage}>next</button>
     <span>{pageNumber}/{totalPages}</span>
   {/if}
-  <div class="wrapper">
-    <PdfViewer
-      bind:this={pdfViewer}
-      pdfUrl={pdfPath}
-      scale={1.5}
-      style={"border: 1px solid black; display: block;"}
-      withAnnotations={true}
-      withTextContent={true}
-      on:loaded={handlePdfLoaded}
-      on:next={handleNextPage}
-      on:prev={handlePrevPage}
-    >
-      <div slot="loading">Loading pdf..</div>
-      <div slot="loading-failed">Well... something went wrong :(</div>
-    </PdfViewer>
-  </div>
+  <PdfViewer
+    bind:this={pdfViewer}
+    url={pdfPathWithPassword}
+    scale={1.5}
+    style={"border: 1px solid black; display: block; margin-top: 10px;"}
+    withAnnotations={true}
+    withTextContent={true}
+    on:load_success={handleLoadedSuccess}
+    on:load_failure={handleLoadFailure}
+    on:next={handleNextPage}
+    on:prev={handlePrevPage}
+  >
+    <div slot="loading">Loading pdf..</div>
+    <div slot="loading-failed">Well... something went wrong :(</div>
+    <div slot="password-required">
+      <p>This pdf is password protected. Please enter the password to view it.</p>
+      <input type="password" bind:value={password} />
+      <button on:click={() => pdfViewer.openWithPassword(password)}>unlock</button>
+    </div>
+  </PdfViewer>
 </main>
-
-<style>
-  .wrapper {
-    margin-top: 10px;
-  }
-</style>

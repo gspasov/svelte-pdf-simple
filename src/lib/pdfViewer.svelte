@@ -1,68 +1,81 @@
 <script lang="ts">
-  import type { PDFDocumentProxy } from "pdfjs-dist";
   import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
-  import type { TextContent } from "pdfjs-dist/types/src/display/api";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
-  import type { NextPage, PdfLoaded, PdfPageContent, PrevPage } from "./types";
+  import type {
+    NextPage,
+    PdfLoadSuccess,
+    PdfLoadFailure,
+    PdfPageContent,
+    PrevPage,
+    PDFDocumentProxy,
+    TextContent,
+    AdditionalParameters,
+    TypedArray,
+  } from "./types";
+  import { isPdfException, PasswordError, PdfExceptionType } from "./types";
 
-  export let page: number = 1;
-  export let pdfUrl: string | undefined = undefined;
-  export let pdfBin: string | undefined = undefined;
-  export let scale: number = 1.0;
-  export let rotation: number = 0;
-  export let offsetX: number = 0;
-  export let offsetY: number = 0;
-  export let style: string = "";
+  export let url: string | URL | undefined = undefined;
+  export let data: string | number[] | TypedArray | undefined = undefined;
+  export let httpHeaders: Record<string, string> | undefined = undefined;
+  export let password: string | undefined = undefined;
+  export let additionalParams: AdditionalParameters | undefined = undefined;
+
+  export let page = 1;
+  export let scale = 1.0;
+  export let rotation = 0;
+  export let offsetX = 0;
+  export let offsetY = 0;
+  export let style = "";
   export let withAnnotations = false;
   export let withTextContent = false;
 
-  export const next = (): void => {
+  export function next(): void {
     if (page === pdfDoc.numPages) return;
     page++;
     renderPage(pdfDoc, page).then((page): void => {
       dispatchNext("next", page);
     });
-  };
+  }
 
-  export const prev = (): void => {
+  export function prev(): void {
     if (page === 1) return;
     page--;
     renderPage(pdfDoc, page).then((page): void => {
       dispatchPrev("prev", page);
     });
-  };
+  }
+
+  export function openWithPassword(password: string): void {
+    (async () => await loadPdf(password))();
+  }
 
   let canvas: HTMLCanvasElement;
   let pdfDoc: PDFDocumentProxy;
-  $: pdfIsLoading = true;
-  $: pdfLoadedSucessfully = false;
+  $: isPdfLoading = true;
+  $: isPdfLoadSuccess = false;
+  $: isPdfLoadFailure = false;
+  $: isPdfPageRenderSuccess = false;
+  $: isPdfPasswordProtected = false;
 
-  const dispatchLoaded = createEventDispatcher<PdfLoaded>();
+  const dispatchLoadSuccess = createEventDispatcher<PdfLoadSuccess>();
+  const dispatchLoadFailure = createEventDispatcher<PdfLoadFailure>();
   const dispatchNext = createEventDispatcher<NextPage>();
   const dispatchPrev = createEventDispatcher<PrevPage>();
+  const dispatch = createEventDispatcher();
 
   GlobalWorkerOptions.workerSrc =
     "https://unpkg.com/pdfjs-dist@2.13.216/legacy/build/pdf.worker.min.js";
 
   onMount(async () => {
-    if (pdfUrl === undefined && pdfBin === undefined) {
+    if (url === undefined && data === undefined) {
       throw new Error("PdfViewer failed to initialize with error: 'No pdf source provided'");
     }
-    await initialPdfLoad();
+    await loadPdf();
   });
 
   async function renderPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPageContent> {
     const pdfPage = await doc.getPage(pageNumber);
-
-    const viewport = pdfPage.getViewport({ scale, rotation, offsetX, offsetY });
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    const canvasContext = canvas.getContext("2d");
-    if (canvasContext !== null) {
-      pdfPage.render({ canvasContext, viewport });
-    }
 
     let annotations: Record<string, unknown>[] | undefined = undefined;
     let textContent: TextContent | undefined = undefined;
@@ -73,32 +86,91 @@
       textContent = await pdfPage.getTextContent();
     }
 
+    const viewport = pdfPage.getViewport({ scale, rotation, offsetX, offsetY });
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    const canvasContext = canvas.getContext("2d");
+    if (canvasContext !== null) {
+      pdfPage.render({ canvasContext, viewport });
+      isPdfPageRenderSuccess = true;
+    }
+
     return { annotations, textContent };
   }
 
-  async function initialPdfLoad(): Promise<void> {
+  async function loadPdf(pwd: string | undefined = undefined): Promise<void> {
     try {
       pdfDoc = await getDocument({
-        ...(pdfUrl && { url: pdfUrl }),
-        ...(pdfBin && { data: pdfBin }),
+        ...(url && { url }),
+        ...(data && { data }),
+        ...(httpHeaders && { httpHeaders }),
+        ...(password && { password }),
+        ...(pwd && { password: pwd }),
+        ...(additionalParams && { ...additionalParams }),
       }).promise;
-      pdfLoadedSucessfully = true;
-      renderPage(pdfDoc, page).then((page): void => {
-        dispatchLoaded("loaded", { pages: pdfDoc.numPages, ...page });
-      });
-    } catch (e: unknown) {
-      pdfLoadedSucessfully = false;
-      console.error("Pdfjs failed to load with:", JSON.stringify(e));
+
+      isPdfLoadSuccess = true;
+      const pageContent = await renderPage(pdfDoc, page);
+
+      dispatchLoadSuccess("load_success", { pages: pdfDoc.numPages, ...pageContent });
+    } catch (error: unknown) {
+      if (isPdfException(error)) {
+        if (
+          error.name === PdfExceptionType.PasswordException &&
+          error.message === PasswordError.PasswordRequired
+        ) {
+          isPdfPasswordProtected = true;
+          dispatch("password_required");
+          return;
+        } else if (
+          error.name === PdfExceptionType.PasswordException &&
+          error.message === PasswordError.IncorrectPassword
+        ) {
+          dispatch("incorrect_password");
+          return;
+        }
+        dispatchLoadFailure("load_failure", {
+          message: error.message,
+          name: error.name,
+          code: error.code,
+        });
+      } else if (error instanceof Error) {
+        dispatchLoadFailure("load_failure", error);
+      } else {
+        dispatchLoadFailure("load_failure", JSON.stringify(error));
+      }
+      isPdfLoadFailure = true;
+      isPdfLoadSuccess = false;
     } finally {
-      pdfIsLoading = false;
+      isPdfLoading = false;
     }
   }
 </script>
 
-{#if pdfLoadedSucessfully && !pdfIsLoading}
-  <canvas {style} class="simple-pdf-svelte-canvas" bind:this={canvas} />
-{:else if pdfIsLoading}
-  <slot name="loading" />
-{:else}
-  <slot name="loading-failed" />
+{#if isPdfLoadSuccess}
+  <canvas
+    class:show={isPdfPageRenderSuccess}
+    style={isPdfPageRenderSuccess && style}
+    bind:this={canvas}
+  />
 {/if}
+{#if !isPdfPageRenderSuccess}
+  {#if isPdfLoading}
+    <slot name="loading" />
+  {:else if isPdfPasswordProtected}
+    <slot name="password-required" />
+  {:else if isPdfLoadFailure}
+    <slot name="loading-failed" />
+  {/if}
+{/if}
+
+<style>
+  canvas {
+    display: none;
+  }
+
+  .show {
+    display: block;
+  }
+</style>
