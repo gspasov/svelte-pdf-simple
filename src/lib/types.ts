@@ -3,9 +3,10 @@ import type {
   PDFDocumentProxy,
   DocumentInitParameters,
   TypedArray,
+  PDFPageProxy,
 } from "pdfjs-dist/types/src/display/api";
 
-export { PDFDocumentProxy, TextContent, TypedArray };
+export { PDFDocumentProxy, PDFPageProxy, TextContent, TypedArray };
 
 export type AdditionalParameters = Omit<
   DocumentInitParameters,

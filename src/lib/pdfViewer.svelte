@@ -9,6 +9,7 @@
     PdfPageContent,
     PrevPage,
     PDFDocumentProxy,
+    PDFPageProxy,
     TextContent,
     AdditionalParameters,
     TypedArray,
@@ -33,17 +34,21 @@
   export function next(): void {
     if (page === pdfDoc.numPages) return;
     page++;
-    renderPage(pdfDoc, page).then((page): void => {
-      dispatchNext("next", page);
+    renderPage(pdfDoc, page).then((pageContent): void => {
+      dispatchNext("next", pageContent);
     });
   }
 
   export function prev(): void {
     if (page === 1) return;
     page--;
-    renderPage(pdfDoc, page).then((page): void => {
-      dispatchPrev("prev", page);
+    renderPage(pdfDoc, page).then((pageContent): void => {
+      dispatchPrev("prev", pageContent);
     });
+  }
+
+  export function resize(newScale: number): void {
+    fillCanvas(pdfPage, newScale, rotation, offsetX, offsetY);
   }
 
   export function openWithPassword(password: string): void {
@@ -52,6 +57,7 @@
 
   let canvas: HTMLCanvasElement;
   let pdfDoc: PDFDocumentProxy;
+  let pdfPage: PDFPageProxy;
   $: isPdfLoading = true;
   $: isPdfLoadSuccess = false;
   $: isPdfLoadFailure = false;
@@ -75,7 +81,7 @@
   });
 
   async function renderPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPageContent> {
-    const pdfPage = await doc.getPage(pageNumber);
+    pdfPage = await doc.getPage(pageNumber);
 
     let annotations: Record<string, unknown>[] | undefined = undefined;
     let textContent: TextContent | undefined = undefined;
@@ -85,16 +91,7 @@
     if (withTextContent) {
       textContent = await pdfPage.getTextContent();
     }
-
-    const viewport = pdfPage.getViewport({ scale, rotation, offsetX, offsetY });
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    const canvasContext = canvas.getContext("2d");
-    if (canvasContext !== null) {
-      pdfPage.render({ canvasContext, viewport });
-      isPdfPageRenderSuccess = true;
-    }
+    fillCanvas(pdfPage, scale, rotation, offsetX, offsetY);
 
     return { annotations, textContent };
   }
@@ -144,6 +141,24 @@
       isPdfLoadSuccess = false;
     } finally {
       isPdfLoading = false;
+    }
+  }
+
+  function fillCanvas(
+    page: PDFPageProxy,
+    scale: number,
+    rotation: number,
+    offsetX: number,
+    offsetY: number,
+  ): void {
+    const viewport = page.getViewport({ scale, rotation, offsetX, offsetY });
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    const canvasContext = canvas.getContext("2d");
+    pdfPage.render({ canvasContext, viewport });
+    if (canvasContext !== null) {
+      isPdfPageRenderSuccess = true;
     }
   }
 </script>

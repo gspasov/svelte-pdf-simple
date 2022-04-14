@@ -11,6 +11,7 @@
   let totalPages = 0;
   let isPdfLoaded = false;
   let password = "";
+  let scale = 1.5;
 
   const pdfPathWithPassword = "./exampleProtected.pdf";
   const pdfPathWithForm = "./formExample.pdf";
@@ -51,6 +52,16 @@
     pdfViewer.prev();
   }
 
+  function onZoomIn(): void {
+    scale += 0.1;
+    pdfViewer.resize(scale);
+  }
+
+  function onZoomOut(): void {
+    scale -= 0.1;
+    pdfViewer.resize(scale);
+  }
+
   function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccessContent>) {
     console.info("loaded", event.detail);
     totalPages = event.detail.pages;
@@ -68,11 +79,13 @@
     <button on:click={onPrevPage}>prev</button>
     <button on:click={onNextPage}>next</button>
     <span>{pageNumber}/{totalPages}</span>
+    <button on:click={onZoomIn}>zoom in</button>
+    <button on:click={onZoomOut}>zoom out</button>
   {/if}
   <PdfViewer
     bind:this={pdfViewer}
     url={pdfPathWithPassword}
-    scale={1.5}
+    {scale}
     style={"border: 1px solid black; display: block; margin-top: 10px;"}
     withAnnotations={true}
     withTextContent={true}
@@ -87,6 +100,7 @@
       <p>This pdf is password protected. Please enter the password to view it.</p>
       <input type="password" bind:value={password} />
       <button on:click={() => pdfViewer.openWithPassword(password)}>unlock</button>
+      <div><span><i>Hint: '123456'</i></span></div>
     </div>
   </PdfViewer>
 </main>
