@@ -157,12 +157,12 @@ With `Base64` encoded string:
 | additionalParams | Additional `pdfjs` related parameters which you could add if necessary. | AdditionalParameters &#124; undefined | N/A | No |
 | withAnnotations | Specifies whether you'll like to attach annotations from the pages you load. | boolean | False | No |
 | withTextContent | Specifies whether you'll like to attach the text content from the pages you load. | boolean | False | No |
-| scale    | Specifies how large you'll like your pdf to be displayed. | float | 1.0 | No |
+| scale    | Specifies how large you'll like your pdf to be displayed. | number (decimal) | 1.0 | No |
 | page     | On which page should the pdf open when it loads. | number | 1 | No |
 | rotation | How much you'd like your pdf to be rotated. | number | 0 | No |
 | offsetX  | If specified, offsets the pdf on the X axis. | number | 0 | No |
 | offsetY  | If specified, offsets the pdf on the Y axis. | number | 0 | No |
-| style    | If specified, the styles are attached to the `canvas` elements in which the pdf is loaded. | string | "" | No |
+| style    | If specified, the styles are attached to the `canvas` element (_in which the pdf is loaded_). | string | "" | No |
 
 ## Handling
 
@@ -170,6 +170,7 @@ With `Base64` encoded string:
 | ------------- | ----------- | ----------------------- |
 | `next/0` | Moves to the next page of the PDF. | N/A |
 | `prev/0` | Moves to the previous page of the PDF. | N/A |
+| `resize/1` | Resizes the PDF to the desired scale value. | number (decimal) |
 | `openWithPassword/1` | Tries to open a locked PDF with the provided password. | string |
 
 ## Dispatch Events
