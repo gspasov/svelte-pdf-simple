@@ -6,14 +6,14 @@
 Simple svelte PDF Viewer, packed with features and functionalities. Fully cusomizable navigation controls and styles.
 
 ## Functionality / Benefits
-- Displays pdf from file, url or binary/Base64 encoded string.
-- Exports functions for managing custom navigation and opening the PDF with a password.
-- Provides **slots** which can be used when PDF is loading / PDF has failed to load / PDF requires password.
+- Displays PDF from file, url or binary/Base64 encoded string.
+- Exports functions for managing custom page navigation, resizing and opening a password protected PDF.
+- Provides **slots** which can be used when **PDF is loading** | **PDF has failed to load** | **PDF requires password**.
 - Provides callbacks for **successful**/**unsuccessful** loading of the PDF.
-- Provides callbacks for navigating **forward** and **backward** in the PDF.
-- Provides PDF annotations and text content.
-- Allows custom styling of the `canvas` tag where the PDF is loaded.
-- Allows customization of you pdf with `scale`, `rotation`, `offsetX`, `offsetY`.
+- Provides callbacks for **forward** and **backward** navigation of the PDF.
+- Provides access to PDF annotations and text content.
+- Allows custom styling on the `canvas` tag where the PDF is loaded.
+- Exports various properties for PDF setup: `scale`, `rotation`, `offsetX`, `offsetY`.
 - You can determine on which page the PDF should be loaded.
 - Has full type support. 
 - Written in TypeScript.
