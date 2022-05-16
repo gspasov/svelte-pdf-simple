@@ -136,13 +136,13 @@ With `Base64` encoded string:
     on:next={handleNextPage}
     on:prev={handlePrevPage}
   >
-    <div slot="loading">Loading pdf..</div>
-    <div slot="loading-failed">Well... something went wrong :(</div>
-    <div slot="password-required">
+    <svelte:fragment slot="loading">Loading pdf..</svelte:fragment>
+    <svelte:fragment slot="loading-failed">Well... something went wrong :(</svelte:fragment>
+    <svelte:fragment slot="password-required">
       <p>This pdf is password protected. Please enter the password to view it.</p>
       <input type="password" bind:value={password} />
       <button on:click={onUnlock}>unlock</button>
-    </div>
+    </svelte:fragment>
   </PdfViewer>
 </main>
 ```
