@@ -1,7 +1,8 @@
 # svelte-pdf-simple
 
-![npm](https://img.shields.io/npm/v/svelte-pdf-simple?style=flat-square)
-![npm](https://img.shields.io/npm/dw/svelte-pdf-simple?style=flat-square)
+[![npm version](http://img.shields.io/npm/v/svelte-pdf-simple.svg)](https://www.npmjs.com/package/svelte-pdf-simple)
+[![npm downloads](https://img.shields.io/npm/dm/svelte-pdf-simple.svg)](https://www.npmjs.com/package/svelte-pdf-simple)
+![license](https://img.shields.io/npm/l/svelte-pdf-simple)
 
 Simple svelte PDF Viewer, packed with features and functionalities. Fully cusomizable navigation controls and styles.
 
