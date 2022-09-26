@@ -100,7 +100,7 @@
     if (withTextContent) {
       textContent = await pdfPage.getTextContent();
     }
-    fillCanvas(pdfPage, scale, rotation, offsetX, offsetY);
+    await fillCanvas(pdfPage, scale, rotation, offsetX, offsetY);
 
     return {
       annotations,
@@ -123,6 +123,7 @@
 
       isPdfLoadSuccess = true;
       const pageContent = await renderPage(pdfDoc, page);
+      isPdfPageRenderSuccess = true;
 
       dispatchLoadSuccess("load_success", { pages: pdfDoc.numPages, ...pageContent });
     } catch (error: unknown) {
@@ -164,22 +165,19 @@
     rotation: number,
     offsetX: number,
     offsetY: number,
-  ): void {
+  ): Promise<void> {
     let newRotation = rotation;
     const currentPageRotation = getPageRotation(page._pageInfo);
     console.log("[gvs]", { currentPageRotation });
     if (newRotation === 0 && rotateUpsideDownPages && currentPageRotation === 180) {
       newRotation = 180;
     }
+    const canvasContext = canvas.getContext("2d");
     const viewport = page.getViewport({ scale, rotation: newRotation, offsetX, offsetY });
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    const canvasContext = canvas.getContext("2d");
-    pdfPage.render({ canvasContext, viewport });
-    if (canvasContext !== null) {
-      isPdfPageRenderSuccess = true;
-    }
+    return pdfPage.render({ canvasContext, viewport }).promise;
   }
 </script>
 
