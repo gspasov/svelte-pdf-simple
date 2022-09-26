@@ -2,19 +2,33 @@
   import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
-  import type {
-    PageChangedEvent,
-    PdfLoadSuccess,
-    PdfLoadFailure,
-    PdfPageContent,
-    PDFDocumentProxy,
-    PDFPageProxy,
-    TextContent,
-    AdditionalParameters,
-    TypedArray,
-    Degrees,
+  import {
+    type PdfLoadSuccess,
+    type PdfPageContent,
+    type PDFDocumentProxy,
+    type PDFPageProxy,
+    type TextContent,
+    type AdditionalParameters,
+    type TypedArray,
+    type Degrees,
+    type PdfException,
+    PdfExceptionName,
   } from "./types";
-  import { isPdfException, PasswordError, PdfExceptionType } from "./types";
+  import { parseError } from "./utils";
+
+  interface $$Slots {
+    loading: {};
+    password_required: {};
+    loading_failed: {};
+  }
+
+  interface $$Events {
+    password_required: CustomEvent<void>;
+    incorrect_password: CustomEvent<void>;
+    load_success: CustomEvent<PdfLoadSuccess>;
+    load_failure: CustomEvent<PdfException>;
+    page_changed: CustomEvent<PdfPageContent>;
+  }
 
   export let url: string | URL | undefined = undefined;
   export let data: string | number[] | TypedArray | undefined = undefined;
@@ -34,7 +48,7 @@
   export function goToPage(pageNumber: number): void {
     if (pageNumber > pdfDoc.numPages || pageNumber < 1) return;
     renderPage(pdfDoc, pageNumber).then((pageContent): void => {
-      dispatchPageChanged("page_changed", pageContent);
+      dispatch("page_changed", pageContent);
     });
   }
 
@@ -59,9 +73,6 @@
   $: isPdfPageRenderSuccess = false;
   $: isPdfPasswordProtected = false;
 
-  const dispatchLoadSuccess = createEventDispatcher<PdfLoadSuccess>();
-  const dispatchLoadFailure = createEventDispatcher<PdfLoadFailure>();
-  const dispatchPageChanged = createEventDispatcher<PageChangedEvent>();
   const dispatch = createEventDispatcher();
 
   GlobalWorkerOptions.workerSrc =
@@ -124,32 +135,24 @@
       const pageContent = await renderPage(pdfDoc, page);
       isPdfPageRenderSuccess = true;
 
-      dispatchLoadSuccess("load_success", { pages: pdfDoc.numPages, ...pageContent });
+      dispatch("load_success", { totalPages: pdfDoc.numPages, ...pageContent });
     } catch (error: unknown) {
-      if (isPdfException(error)) {
-        if (
-          error.name === PdfExceptionType.PasswordException &&
-          error.message === PasswordError.PasswordRequired
-        ) {
+      console.log("[gvs]", { error });
+
+      const parsedError = parseError(error);
+      switch (parsedError.name) {
+        case PdfExceptionName.PasswordRequiredException: {
           isPdfPasswordProtected = true;
           dispatch("password_required");
           return;
-        } else if (
-          error.name === PdfExceptionType.PasswordException &&
-          error.message === PasswordError.IncorrectPassword
-        ) {
+        }
+        case PdfExceptionName.IncorrectPasswordException: {
           dispatch("incorrect_password");
           return;
         }
-        dispatchLoadFailure("load_failure", {
-          message: error.message,
-          name: error.name,
-          code: error.code,
-        });
-      } else if (error instanceof Error) {
-        dispatchLoadFailure("load_failure", error);
-      } else {
-        dispatchLoadFailure("load_failure", JSON.stringify(error));
+        default: {
+          dispatch("load_failure", parsedError);
+        }
       }
       isPdfLoadFailure = true;
       isPdfLoadSuccess = false;
@@ -186,9 +189,9 @@
   {#if isPdfLoading}
     <slot name="loading" />
   {:else if isPdfPasswordProtected}
-    <slot name="password-required" />
+    <slot name="password_required" />
   {:else if isPdfLoadFailure}
-    <slot name="loading-failed" />
+    <slot name="loading_failed" />
   {/if}
 {/if}
 

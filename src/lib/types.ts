@@ -23,52 +23,23 @@ export type PdfPageContent = {
 };
 
 export type PdfLoadSuccess = {
-  load_success: PdfLoadSuccessContent;
-};
-
-export type PdfLoadFailure = {
-  load_failure: PdfLoadFailureContent;
-};
-
-export type PdfLoadFailureContent = PdfException | Error | string;
-
-export type PdfLoadSuccessContent = {
-  pages: number;
+  totalPages: number;
 } & PdfPageContent;
 
-export type PageChangedEvent = {
-  page_changed: PdfPageContent;
-};
+export type PdfLoadFailure = PdfException;
 
 export type PdfException = {
-  message: string;
-  name: string;
-  code: string;
+  name: PdfExceptionName;
+  message?: string;
 };
 
-export function isPdfException(value: unknown): value is PdfException {
-  const exception = value as PdfException;
-  return (
-    exception.code !== undefined &&
-    typeof exception.code === "number" &&
-    exception.name !== undefined &&
-    typeof exception.name === "string" &&
-    exception.message !== undefined &&
-    typeof exception.message === "string"
-  );
-}
-
-export enum PdfExceptionType {
-  PasswordException = "PasswordException",
+export enum PdfExceptionName {
   UnknownErrorException = "UnknownErrorException",
   InvalidPDFException = "InvalidPDFException",
   MissingPDFException = "MissingPDFException",
   UnexpectedResponseException = "UnexpectedResponseException",
   FormatError = "FormatError",
   AbortException = "AbortException",
-}
-
-export enum PasswordError {
-  PasswordRequired = "No password given",
-  IncorrectPassword = "Incorrect Password",
+  PasswordRequiredException = "PasswordRequired",
+  IncorrectPasswordException = "IncorrectPassword",
 }

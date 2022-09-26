@@ -1,10 +1,7 @@
 <script lang="ts">
   import { PdfViewer } from "svelte-pdf-simple";
-  import type {
-    PdfLoadFailureContent,
-    PdfLoadSuccessContent,
-    PdfPageContent,
-  } from "svelte-pdf-simple";
+  import type { PdfLoadSuccess, PdfPageContent } from "svelte-pdf-simple";
+  import type { PdfException } from "$lib/types";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;
@@ -53,14 +50,14 @@
     pdfViewer.resize(scale);
   }
 
-  function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccessContent>) {
+  function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccess>) {
     console.info("loaded", event.detail);
-    totalPages = event.detail.pages;
+    totalPages = event.detail.totalPages;
     pageNumber = 1;
     isPdfLoaded = true;
   }
 
-  function handleLoadFailure(event: CustomEvent<PdfLoadFailureContent>) {
+  function handleLoadFailure(event: CustomEvent<PdfException>) {
     console.info("failed", event.detail);
   }
 </script>
@@ -85,8 +82,8 @@
     on:page_changed={handlePageChanged}
   >
     <svelte:fragment slot="loading">Loading pdf..</svelte:fragment>
-    <svelte:fragment slot="loading-failed">Well... something went wrong :(</svelte:fragment>
-    <svelte:fragment slot="password-required">
+    <svelte:fragment slot="loading_failed">Well... something went wrong :(</svelte:fragment>
+    <svelte:fragment slot="password_required">
       <p>This pdf is password protected. Please enter the password to view it.</p>
       <input type="password" bind:value={password} />
       <button on:click={() => pdfViewer.openWithPassword(password)}>unlock</button>
