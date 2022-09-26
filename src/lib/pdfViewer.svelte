@@ -30,7 +30,6 @@
   export let style = "";
   export let withAnnotations = false;
   export let withTextContent = false;
-  export let rotateUpsideDownPages = false;
 
   export function goToPage(pageNumber: number): void {
     if (pageNumber > pdfDoc.numPages || pageNumber < 1) return;
@@ -166,14 +165,9 @@
     offsetX: number,
     offsetY: number,
   ): Promise<void> {
-    let newRotation = rotation;
-    const currentPageRotation = getPageRotation(page._pageInfo);
-    console.log("[gvs]", { currentPageRotation });
-    if (newRotation === 0 && rotateUpsideDownPages && currentPageRotation === 180) {
-      newRotation = 180;
-    }
+    const pageRotation = rotation + getPageRotation(page._pageInfo);
     const canvasContext = canvas.getContext("2d");
-    const viewport = page.getViewport({ scale, rotation: newRotation, offsetX, offsetY });
+    const viewport = page.getViewport({ scale, rotation: pageRotation, offsetX, offsetY });
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 

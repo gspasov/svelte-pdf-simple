@@ -80,7 +80,6 @@
     style={"border: 1px solid black; display: block; margin-top: 10px;"}
     withAnnotations={true}
     withTextContent={true}
-    rotateUpsideDownPages={true}
     on:load_success={handleLoadedSuccess}
     on:load_failure={handleLoadFailure}
     on:page_changed={handlePageChanged}
