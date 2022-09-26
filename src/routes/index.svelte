@@ -34,22 +34,13 @@
       "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G",
   );
 
-  function handleNextPage(event: CustomEvent<PdfPageContent>): void {
-    console.info("next", event.detail);
-    pageNumber++;
+  function handlePageChanged(event: CustomEvent<PdfPageContent>): void {
+    console.info("page changed", event.detail);
+    pageNumber = event.detail.pageNumber;
   }
 
-  function handlePrevPage(event: CustomEvent<PdfPageContent>): void {
-    console.info("prev", event.detail);
-    pageNumber--;
-  }
-
-  function onNextPage(): void {
-    pdfViewer.next();
-  }
-
-  function onPrevPage(): void {
-    pdfViewer.prev();
+  function goToPage(page: number): void {
+    pdfViewer.goToPage(page);
   }
 
   function onZoomIn(): void {
@@ -76,8 +67,8 @@
 
 <main>
   {#if isPdfLoaded}
-    <button on:click={onPrevPage}>prev</button>
-    <button on:click={onNextPage}>next</button>
+    <button on:click={() => goToPage(pageNumber - 1)}>prev</button>
+    <button on:click={() => goToPage(pageNumber + 1)}>next</button>
     <span>{pageNumber}/{totalPages}</span>
     <button on:click={onZoomIn}>zoom in</button>
     <button on:click={onZoomOut}>zoom out</button>
@@ -92,8 +83,7 @@
     rotateUpsideDownPages={true}
     on:load_success={handleLoadedSuccess}
     on:load_failure={handleLoadFailure}
-    on:next={handleNextPage}
-    on:prev={handlePrevPage}
+    on:page_changed={handlePageChanged}
   >
     <svelte:fragment slot="loading">Loading pdf..</svelte:fragment>
     <svelte:fragment slot="loading-failed">Well... something went wrong :(</svelte:fragment>

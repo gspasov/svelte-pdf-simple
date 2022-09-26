@@ -3,11 +3,10 @@
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
   import type {
-    NextPage,
+    PageChangedEvent,
     PdfLoadSuccess,
     PdfLoadFailure,
     PdfPageContent,
-    PrevPage,
     PDFDocumentProxy,
     PDFPageProxy,
     TextContent,
@@ -33,19 +32,10 @@
   export let withTextContent = false;
   export let rotateUpsideDownPages = false;
 
-  export function next(): void {
-    if (page === pdfDoc.numPages) return;
-    page++;
-    renderPage(pdfDoc, page).then((pageContent): void => {
-      dispatchNext("next", pageContent);
-    });
-  }
-
-  export function prev(): void {
-    if (page === 1) return;
-    page--;
-    renderPage(pdfDoc, page).then((pageContent): void => {
-      dispatchPrev("prev", pageContent);
+  export function goToPage(pageNumber: number): void {
+    if (pageNumber > pdfDoc.numPages || pageNumber < 1) return;
+    renderPage(pdfDoc, pageNumber).then((pageContent): void => {
+      dispatchPageChanged("page_changed", pageContent);
     });
   }
 
@@ -72,8 +62,7 @@
 
   const dispatchLoadSuccess = createEventDispatcher<PdfLoadSuccess>();
   const dispatchLoadFailure = createEventDispatcher<PdfLoadFailure>();
-  const dispatchNext = createEventDispatcher<NextPage>();
-  const dispatchPrev = createEventDispatcher<PrevPage>();
+  const dispatchPageChanged = createEventDispatcher<PageChangedEvent>();
   const dispatch = createEventDispatcher();
 
   GlobalWorkerOptions.workerSrc =

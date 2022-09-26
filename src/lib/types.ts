@@ -36,12 +36,8 @@ export type PdfLoadSuccessContent = {
   pages: number;
 } & PdfPageContent;
 
-export type NextPage = {
-  next: PdfPageContent;
-};
-
-export type PrevPage = {
-  prev: PdfPageContent;
+export type PageChangedEvent = {
+  page_changed: PdfPageContent;
 };
 
 export type PdfException = {
