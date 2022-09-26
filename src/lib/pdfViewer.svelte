@@ -13,6 +13,7 @@
     TextContent,
     AdditionalParameters,
     TypedArray,
+    Degrees,
   } from "./types";
   import { isPdfException, PasswordError, PdfExceptionType } from "./types";
 
@@ -24,12 +25,13 @@
 
   export let page = 1;
   export let scale = 1.0;
-  export let rotation = 0;
+  export let rotation: Degrees = 0;
   export let offsetX = 0;
   export let offsetY = 0;
   export let style = "";
   export let withAnnotations = false;
   export let withTextContent = false;
+  export let rotateUpsideDownPages = false;
 
   export function next(): void {
     if (page === pdfDoc.numPages) return;
@@ -49,6 +51,10 @@
 
   export function resize(newScale: number): void {
     fillCanvas(pdfPage, newScale, rotation, offsetX, offsetY);
+  }
+
+  export function rotate(degrees: Degrees): void {
+    fillCanvas(pdfPage, scale, degrees, offsetX, offsetY);
   }
 
   export function openWithPassword(password: string): void {
@@ -80,6 +86,20 @@
     await loadPdf();
   });
 
+  function getPageRotation(pdfPageInfo: unknown): Degrees | undefined {
+    const key = "rotate";
+    if (
+      typeof pdfPageInfo === "object" &&
+      pdfPageInfo !== null &&
+      Object.prototype.hasOwnProperty.call(pdfPageInfo, key) &&
+      typeof pdfPageInfo[key] === "number"
+    ) {
+      return pdfPageInfo[key] as Degrees;
+    }
+
+    return undefined;
+  }
+
   async function renderPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPageContent> {
     pdfPage = await doc.getPage(pageNumber);
 
@@ -93,7 +113,12 @@
     }
     fillCanvas(pdfPage, scale, rotation, offsetX, offsetY);
 
-    return { annotations, textContent };
+    return {
+      annotations,
+      textContent,
+      pageNumber,
+      pageRotation: getPageRotation(pdfPage._pageInfo),
+    };
   }
 
   async function loadPdf(pwd: string | undefined = undefined): Promise<void> {
@@ -151,7 +176,13 @@
     offsetX: number,
     offsetY: number,
   ): void {
-    const viewport = page.getViewport({ scale, rotation, offsetX, offsetY });
+    let newRotation = rotation;
+    const currentPageRotation = getPageRotation(page._pageInfo);
+    console.log("[gvs]", { currentPageRotation });
+    if (newRotation === 0 && rotateUpsideDownPages && currentPageRotation === 180) {
+      newRotation = 180;
+    }
+    const viewport = page.getViewport({ scale, rotation: newRotation, offsetX, offsetY });
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 

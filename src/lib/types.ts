@@ -13,9 +13,13 @@ export type AdditionalParameters = Omit<
   "url" | "data" | "password" | "httpHeaders"
 >;
 
+export type Degrees = 0 | 90 | 180 | 270 | 360;
+
 export type PdfPageContent = {
   annotations?: Record<string, unknown>[];
   textContent?: TextContent;
+  pageRotation?: Degrees;
+  pageNumber: number;
 };
 
 export type PdfLoadSuccess = {
