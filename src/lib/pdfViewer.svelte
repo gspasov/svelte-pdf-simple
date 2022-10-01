@@ -8,13 +8,16 @@
     type PDFDocumentProxy,
     type PDFPageProxy,
     type TextContent,
-    type AdditionalParameters,
-    type TypedArray,
     type Degrees,
     type PdfException,
+    type PdfViewerProps,
     PdfExceptionName,
   } from "./types";
   import { parseError } from "./utils";
+
+  interface $$Props extends svelte.JSX.HTMLAttributes<HTMLCanvasElement> {
+    props: PdfViewerProps;
+  }
 
   interface $$Slots {
     loading: {};
@@ -30,20 +33,7 @@
     page_changed: CustomEvent<PdfPageContent>;
   }
 
-  export let url: string | URL | undefined = undefined;
-  export let data: string | number[] | TypedArray | undefined = undefined;
-  export let httpHeaders: Record<string, string> | undefined = undefined;
-  export let password: string | undefined = undefined;
-  export let additionalParams: AdditionalParameters | undefined = undefined;
-
-  export let page = 1;
-  export let scale = 1.0;
-  export let rotation: Degrees = 0;
-  export let offsetX = 0;
-  export let offsetY = 0;
-  export let style = "";
-  export let withAnnotations = false;
-  export let withTextContent = false;
+  export let props: PdfViewerProps;
 
   export function goToPage(pageNumber: number): void {
     if (pageNumber > pdfDoc.numPages || pageNumber < 1) return;
@@ -53,11 +43,11 @@
   }
 
   export function resize(newScale: number): void {
-    fillCanvas(pdfPage, newScale, rotation, offsetX, offsetY);
+    fillCanvas(pdfPage, newScale, _props.rotation, _props.offsetX, _props.offsetY);
   }
 
   export function rotate(degrees: Degrees): void {
-    fillCanvas(pdfPage, scale, degrees, offsetX, offsetY);
+    fillCanvas(pdfPage, _props.scale, degrees, _props.offsetX, _props.offsetY);
   }
 
   export function openWithPassword(password: string): void {
@@ -67,6 +57,16 @@
   let canvas: HTMLCanvasElement;
   let pdfDoc: PDFDocumentProxy;
   let pdfPage: PDFPageProxy;
+  let _props: PdfViewerProps = {
+    page: 1,
+    scale: 1.0,
+    rotation: 0,
+    offsetX: 0,
+    offsetY: 0,
+    withAnnotations: false,
+    withTextContent: false,
+    ...props,
+  };
   $: isPdfLoading = true;
   $: isPdfLoadSuccess = false;
   $: isPdfLoadFailure = false;
@@ -79,13 +79,14 @@
     "https://unpkg.com/pdfjs-dist@2.13.216/legacy/build/pdf.worker.min.js";
 
   onMount(async () => {
-    if (url === undefined && data === undefined) {
-      throw new Error("PdfViewer failed to initialize with error: 'No pdf source provided'");
+    if (_props.url === undefined && _props.data === undefined && _props.path === undefined) {
+      isPdfLoadFailure = true;
+      console.warn("[svelte-pdf-simple] Missing pdf data source.");
     }
     await loadPdf();
   });
 
-  function getPageRotation(pdfPageInfo: unknown): Degrees | undefined {
+  function getPageRotation(pdfPageInfo: unknown): Degrees | null {
     const key = "rotate";
     if (
       typeof pdfPageInfo === "object" &&
@@ -96,49 +97,52 @@
       return pdfPageInfo[key] as Degrees;
     }
 
-    return undefined;
+    return null;
   }
 
   async function renderPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPageContent> {
     pdfPage = await doc.getPage(pageNumber);
 
-    let annotations: Record<string, unknown>[] | undefined = undefined;
-    let textContent: TextContent | undefined = undefined;
-    if (withAnnotations) {
-      annotations = Object.values(await pdfPage.getAnnotations());
+    let annotations: Record<string, unknown>[];
+    let textContent: TextContent;
+    if (_props.withAnnotations) {
+      annotations = await pdfPage.getAnnotations();
     }
-    if (withTextContent) {
+    if (_props.withTextContent) {
       textContent = await pdfPage.getTextContent();
     }
-    await fillCanvas(pdfPage, scale, rotation, offsetX, offsetY);
+    await fillCanvas(pdfPage, _props.scale, _props.rotation, _props.offsetX, _props.offsetY);
 
+    const pageRotation = getPageRotation(pdfPage._pageInfo);
     return {
-      annotations,
-      textContent,
+      ...(annotations != null && { annotations }),
+      ...(textContent != null && { textContent }),
+      ...(pageRotation != null && { pageRotation }),
       pageNumber,
-      pageRotation: getPageRotation(pdfPage._pageInfo),
     };
   }
 
-  async function loadPdf(pwd: string | undefined = undefined): Promise<void> {
+  async function loadPdf(pwd?: string): Promise<void> {
     try {
       pdfDoc = await getDocument({
-        ...(url && { url }),
-        ...(data && { data }),
-        ...(httpHeaders && { httpHeaders }),
-        ...(password && { password }),
+        ...(_props.url && { url: _props.url }),
+        ...(_props.path && { url: _props.path }),
+        ...(_props.data && { data: _props.data }),
+        ...(_props.httpHeaders && { httpHeaders: _props.httpHeaders }),
+        ...(_props.password && { password: _props.password }),
         ...(pwd && { password: pwd }),
-        ...(additionalParams && { ...additionalParams }),
+        ...(_props.additionalParams && { ..._props.additionalParams }),
+        standardFontDataUrl:
+          _props.additionalParams?.standardFontDataUrl ??
+          "https://mozilla.github.io/pdf.js/web/standard_fonts/",
       }).promise;
 
       isPdfLoadSuccess = true;
-      const pageContent = await renderPage(pdfDoc, page);
+      const pageContent = await renderPage(pdfDoc, _props.page);
       isPdfPageRenderSuccess = true;
 
       dispatch("load_success", { totalPages: pdfDoc.numPages, ...pageContent });
     } catch (error: unknown) {
-      console.log("[gvs]", { error });
-
       const parsedError = parseError(error);
       switch (parsedError.name) {
         case PdfExceptionName.PasswordRequiredException: {
@@ -181,7 +185,7 @@
 {#if isPdfLoadSuccess}
   <canvas
     class:show={isPdfPageRenderSuccess}
-    style={isPdfPageRenderSuccess && style}
+    {...isPdfPageRenderSuccess && { ...$$restProps }}
     bind:this={canvas}
   />
 {/if}

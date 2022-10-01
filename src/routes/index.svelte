@@ -1,7 +1,7 @@
 <script lang="ts">
   import { PdfViewer } from "svelte-pdf-simple";
   import type { PdfLoadSuccess, PdfPageContent } from "svelte-pdf-simple";
-  import type { PdfException } from "$lib/types";
+  import type { Degrees, PdfException } from "$lib/types";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;
@@ -9,6 +9,7 @@
   let isPdfLoaded = false;
   let password = "";
   let scale = 1.5;
+  let rotation: Degrees = 0;
 
   const pdfPathWithPassword = "./exampleProtected.pdf";
   const pdfPathWithForm = "./formExample.pdf";
@@ -40,14 +41,24 @@
     pdfViewer.goToPage(page);
   }
 
-  function onZoomIn(): void {
+  function zoomIn(): void {
     scale += 0.1;
     pdfViewer.resize(scale);
   }
 
-  function onZoomOut(): void {
+  function zoomOut(): void {
     scale -= 0.1;
     pdfViewer.resize(scale);
+  }
+
+  function rotateLeft(): void {
+    rotation -= 90;
+    pdfViewer.rotate(rotation as Degrees);
+  }
+
+  function rotateRight(): void {
+    rotation += 90;
+    pdfViewer.rotate(rotation as Degrees);
   }
 
   function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccess>) {
@@ -67,16 +78,20 @@
     <button on:click={() => goToPage(pageNumber - 1)}>prev</button>
     <button on:click={() => goToPage(pageNumber + 1)}>next</button>
     <span>{pageNumber}/{totalPages}</span>
-    <button on:click={onZoomIn}>zoom in</button>
-    <button on:click={onZoomOut}>zoom out</button>
+    <button on:click={zoomIn}>zoom in</button>
+    <button on:click={zoomOut}>zoom out</button>
+    <button on:click={rotateLeft}>rotate left</button>
+    <button on:click={rotateRight}>rotate right</button>
   {/if}
   <PdfViewer
     bind:this={pdfViewer}
-    url={pdfPathWithPassword}
-    {scale}
-    style={"border: 1px solid black; display: block; margin-top: 10px;"}
-    withAnnotations={true}
-    withTextContent={true}
+    props={{
+      path: pdfPathWithPassword,
+      scale,
+      withAnnotations: true,
+      withTextContent: true,
+    }}
+    style="border: 1px solid black; display: block; margin-top: 10px;"
     on:load_success={handleLoadedSuccess}
     on:load_failure={handleLoadFailure}
     on:page_changed={handlePageChanged}

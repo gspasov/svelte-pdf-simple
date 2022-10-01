@@ -13,7 +13,7 @@ export type AdditionalParameters = Omit<
   "url" | "data" | "password" | "httpHeaders"
 >;
 
-export type Degrees = 0 | 90 | 180 | 270 | 360;
+export type Degrees = -360 | -270 | -180 | -90 | 0 | 90 | 180 | 270 | 360;
 
 export type PdfPageContent = {
   annotations?: Record<string, unknown>[];
@@ -43,3 +43,19 @@ export enum PdfExceptionName {
   PasswordRequiredException = "PasswordRequired",
   IncorrectPasswordException = "IncorrectPassword",
 }
+
+export type PdfViewerProps = {
+  url?: string | URL;
+  path?: string;
+  data?: string | number[] | TypedArray;
+  httpHeaders?: Record<string, string>;
+  password?: string;
+  additionalParams?: AdditionalParameters;
+  page?: number;
+  scale?: number;
+  rotation?: Degrees;
+  offsetX?: number;
+  offsetY?: number;
+  withAnnotations?: boolean;
+  withTextContent?: boolean;
+};
