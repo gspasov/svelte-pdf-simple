@@ -3,6 +3,7 @@ import {
   type PdfLoadSuccess,
   type PdfPageContent,
   type PdfException,
+  type Degrees,
   PdfExceptionName,
 } from "./types";
-export { PdfViewer, PdfPageContent, PdfLoadSuccess, PdfException, PdfExceptionName };
+export { PdfViewer, Degrees, PdfPageContent, PdfLoadSuccess, PdfException, PdfExceptionName };

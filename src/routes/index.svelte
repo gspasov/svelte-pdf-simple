@@ -1,7 +1,6 @@
 <script lang="ts">
   import { PdfViewer } from "svelte-pdf-simple";
-  import type { PdfLoadSuccess, PdfPageContent } from "svelte-pdf-simple";
-  import type { Degrees, PdfException } from "$lib/types";
+  import type { PdfLoadSuccess, PdfPageContent, Degrees, PdfException } from "svelte-pdf-simple";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;

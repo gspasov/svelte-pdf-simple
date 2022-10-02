@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+  import * as pdfjs from "pdfjs-dist";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
   import {
@@ -10,19 +10,15 @@
     type TextContent,
     type Degrees,
     type PdfException,
-    type PdfViewerProps,
+    type Properties,
     PdfExceptionName,
   } from "./types";
   import { parseError } from "./utils";
 
-  interface $$Props extends svelte.JSX.HTMLAttributes<HTMLCanvasElement> {
-    props: PdfViewerProps;
-  }
-
   interface $$Slots {
-    loading: {};
-    password_required: {};
-    loading_failed: {};
+    loading: Record<string, unknown>;
+    password_required: Record<string, unknown>;
+    loading_failed: Record<string, unknown>;
   }
 
   interface $$Events {
@@ -33,31 +29,31 @@
     page_changed: CustomEvent<PdfPageContent>;
   }
 
-  export let props: PdfViewerProps;
+  export let props: Properties;
 
-  export function goToPage(pageNumber: number): void {
+  export async function goToPage(pageNumber: number): Promise<void> {
     if (pageNumber > pdfDoc.numPages || pageNumber < 1) return;
-    renderPage(pdfDoc, pageNumber).then((pageContent): void => {
+    return renderPage(pdfDoc, pageNumber).then((pageContent): void => {
       dispatch("page_changed", pageContent);
     });
   }
 
-  export function resize(newScale: number): void {
-    fillCanvas(pdfPage, newScale, _props.rotation, _props.offsetX, _props.offsetY);
+  export async function resize(newScale: number): Promise<void> {
+    return fillCanvas(pdfPage, newScale, _props.rotation, _props.offsetX, _props.offsetY);
   }
 
-  export function rotate(degrees: Degrees): void {
-    fillCanvas(pdfPage, _props.scale, degrees, _props.offsetX, _props.offsetY);
+  export async function rotate(degrees: Degrees): Promise<void> {
+    return fillCanvas(pdfPage, _props.scale, degrees, _props.offsetX, _props.offsetY);
   }
 
-  export function openWithPassword(password: string): void {
-    (async () => await loadPdf(password))();
+  export async function openWithPassword(password: string): Promise<void> {
+    return loadPdf(password);
   }
 
   let canvas: HTMLCanvasElement;
   let pdfDoc: PDFDocumentProxy;
   let pdfPage: PDFPageProxy;
-  let _props: PdfViewerProps = {
+  let _props: Properties = {
     page: 1,
     scale: 1.0,
     rotation: 0,
@@ -75,7 +71,7 @@
 
   const dispatch = createEventDispatcher();
 
-  GlobalWorkerOptions.workerSrc =
+  pdfjs.GlobalWorkerOptions.workerSrc =
     "https://unpkg.com/pdfjs-dist@2.13.216/legacy/build/pdf.worker.min.js";
 
   onMount(async () => {
@@ -124,7 +120,7 @@
 
   async function loadPdf(pwd?: string): Promise<void> {
     try {
-      pdfDoc = await getDocument({
+      pdfDoc = await pdfjs.getDocument({
         ...(_props.url && { url: _props.url }),
         ...(_props.path && { url: _props.path }),
         ...(_props.data && { data: _props.data }),

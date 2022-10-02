@@ -44,7 +44,7 @@ export enum PdfExceptionName {
   IncorrectPasswordException = "IncorrectPassword",
 }
 
-export type PdfViewerProps = {
+export type Properties = {
   url?: string | URL;
   path?: string;
   data?: string | number[] | TypedArray;
