@@ -45,17 +45,57 @@ export enum PdfExceptionName {
 }
 
 export type Properties = {
+  /**
+   * - Url pointing to a pdf.
+   */
   url?: string | URL;
+  /**
+   * - Local path pointing to a pdf.
+   */
   path?: string;
+  /**
+   * - Raw pdf data
+   */
   data?: string | number[] | TypedArray;
+  /**
+   * - Used if you are sourcing pdf from a Url
+   * and need authentication or any custom headers to pass
+   */
   httpHeaders?: Record<string, string>;
+  /**
+   * - If the pdf is protected by password, this value will be used to open it
+   */
   password?: string;
+  /**
+   * - Additional parameters exposed by 'pdfjs'
+   */
   additionalParams?: AdditionalParameters;
+  /**
+   * - On which page to open the pdf upon first load
+   */
   page?: number;
+  /**
+   * - How scaled up or down to be the pdf.
+   */
   scale?: number;
+  /**
+   * - Rotation of the pdf
+   */
   rotation?: Degrees;
+  /**
+   * - Offset on the x axis
+   */
   offsetX?: number;
+  /**
+   * - Offset on the y axis
+   */
   offsetY?: number;
+  /**
+   * - Whether or not to load Annotations
+   */
   withAnnotations?: boolean;
+  /**
+   * - Whether or not to load TextContent
+   */
   withTextContent?: boolean;
 };
