@@ -161,6 +161,15 @@ With `Base64` encoded string:
 | withTextContent  | Specifies whether you'll like to attach the text content from the pages you load. | boolean | False | No |
 | additionalParams | Additional `pdfjs` related parameters which you could add if necessary. | AdditionalParameters &#124; undefined | N/A | No |
 
+## Styling
+You can style the canvas in which the pdf is loaded by just passing `style` property to `PdfViewer`. `$$restProps` are passed down the to `canvas` element.
+
+```svelte
+<PdfViewer 
+  props={{path: "./myPdf.pdf"}} 
+  style="border: 1px solid black; display: block; margin-top: 10px;"/>
+```
+
 ## Handling
 
 | Function name        | Description                                            | Accepted parameter type |
