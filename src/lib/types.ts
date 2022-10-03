@@ -67,35 +67,42 @@ export type Properties = {
    */
   password?: string;
   /**
-   * - Additional parameters exposed by 'pdfjs'
-   */
-  additionalParams?: AdditionalParameters;
-  /**
    * - On which page to open the pdf upon first load
+   * Default: 1
    */
   page?: number;
   /**
    * - How scaled up or down to be the pdf.
+   * Default: 1
    */
   scale?: number;
   /**
    * - Rotation of the pdf
+   * Default: 0
    */
   rotation?: Degrees;
   /**
    * - Offset on the x axis
+   * Default: 0
    */
   offsetX?: number;
   /**
    * - Offset on the y axis
+   * Default: 0
    */
   offsetY?: number;
   /**
    * - Whether or not to load Annotations
+   * Default: false
    */
   withAnnotations?: boolean;
   /**
    * - Whether or not to load TextContent
+   * Default: false
    */
   withTextContent?: boolean;
+  /**
+   * - Additional parameters exposed by 'pdfjs'
+   */
+  additionalParams?: AdditionalParameters;
 };
