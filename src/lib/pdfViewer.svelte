@@ -4,12 +4,12 @@
   import { createEventDispatcher } from "svelte";
   import {
     type PdfLoadSuccess,
+    type PdfLoadFailure,
     type PdfPageContent,
     type PDFDocumentProxy,
     type PDFPageProxy,
     type TextContent,
     type Degrees,
-    type PdfException,
     type Properties,
     PdfExceptionName,
   } from "./types";
@@ -25,7 +25,7 @@
     password_required: CustomEvent<void>;
     incorrect_password: CustomEvent<void>;
     load_success: CustomEvent<PdfLoadSuccess>;
-    load_failure: CustomEvent<PdfException>;
+    load_failure: CustomEvent<PdfLoadFailure>;
     page_changed: CustomEvent<PdfPageContent>;
   }
 
