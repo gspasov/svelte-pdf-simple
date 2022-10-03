@@ -1,7 +1,8 @@
 # svelte-pdf-simple
 
-![npm](https://img.shields.io/npm/v/svelte-pdf-simple?style=flat-square)
-![npm](https://img.shields.io/npm/dw/svelte-pdf-simple?style=flat-square)
+[![npm version](http://img.shields.io/npm/v/svelte-pdf-simple.svg)](https://www.npmjs.com/package/svelte-pdf-simple)
+[![npm downloads](https://img.shields.io/npm/dm/svelte-pdf-simple.svg)](https://www.npmjs.com/package/svelte-pdf-simple)
+![license](https://img.shields.io/npm/l/svelte-pdf-simple)
 
 Simple svelte PDF Viewer, packed with features and functionalities. Fully cusomizable navigation controls and styles.
 
@@ -87,24 +88,13 @@ With `Base64` encoded string:
   let isPdfLoaded = false;
   let password = "";
 
-  function handleNextPage(event: CustomEvent<PdfPageContent>): void {
-    pageNumber++;
+
+  function goToPage(page: number): void {
+    pdfViewer.goToPage(page);
   }
 
-  function handlePrevPage(event: CustomEvent<PdfPageContent>): void {
-    pageNumber--;
-  }
-
-  function onNextPage(): void {
-    pdfViewer.next();
-  }
-
-  function onPrevPage(): void {
-    pdfViewer.prev();
-  }
-
-  function onUnlock(): void {
-    pdfViewer.openWithPassword(password);
+  function handlePageChanged(event: CustomEvent<PdfPageContent>): void {
+    pageNumber = event.details.pageNumber;
   }
 
   function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccessContent>) {
@@ -120,28 +110,29 @@ With `Base64` encoded string:
 
 <main>
   {#if isPdfLoaded}
-    <button on:click={onPrevPage}>prev</button>
-    <button on:click={onNextPage}>next</button>
+    <button on:click={() => goToPage(pageNumber - 1)}>prev</button>
+    <button on:click={() => goToPage(pageNumber + 1)}>next</button>
     <span>{pageNumber}/{totalPages}</span>
   {/if}
   <PdfViewer
     bind:this={pdfViewer}
-    url={"./example.pdf"}
-    scale={1.5}
-    style={"border: 1px solid black; display: block; margin-top: 10px;"}
-    withAnnotations={true}
-    withTextContent={true}
+    props={{
+      path: "./example.pdf",
+      scale: 1.5,
+      withAnnotations: true,
+      withTextContent: true,
+    }}
+    style="border: 1px solid black; display: block; margin-top: 10px;"
     on:load_success={handleLoadedSuccess}
     on:load_failure={handleLoadFailure}
-    on:next={handleNextPage}
-    on:prev={handlePrevPage}
+    on:page_changed={handlePageChanged}
   >
     <svelte:fragment slot="loading">Loading pdf..</svelte:fragment>
     <svelte:fragment slot="loading-failed">Well... something went wrong :(</svelte:fragment>
     <svelte:fragment slot="password-required">
       <p>This pdf is password protected. Please enter the password to view it.</p>
       <input type="password" bind:value={password} />
-      <button on:click={onUnlock}>unlock</button>
+      <button on:click={() => pdfViewer.openWithPassword(password)}>unlock</button>
     </svelte:fragment>
   </PdfViewer>
 </main>
@@ -149,50 +140,61 @@ With `Base64` encoded string:
 
 ## Props
 
-**NB: Specify either a `url` or `data` when initializing PdfViewer !!**
+**NB: You cannot setup a PdfViewer without specifying a source. Therefore you must specify source through either of the following properties `data` | `url` | `path`.** 
 
-| Prop name        | Description                                                                                                                                                                                                                                                                                                            | Type                                                      | Default value | Required |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------- | -------- |
-| url              | What PDF to load. The url can be either a `path` to a file (usually located in the `/public` folder of your Svelte project, e.g. _./myPdf.pdf_) or a `url` (e.g. _https://my-domain.com/myPdf.pdf_). **When loading PDF from a `url` there are some specifics to be considered. [Read more](#using-pdfs-from-links)**. | string &#124; URL &#124; undefined                        | N/A           | No       |
-| data             | Provided when you want to specify a `pdf` either in binary form or a Base64 encoded pdf. When providing a Base64 encoded pdf use `atob` function to convert it to it's binary form when providing it in the `data` prop.                                                                                               | string &#124; number[] &#124; TypedArray &#124; undefined | N/A           | No       |
-| password         | Specifies the password used to unlock protected pdf.                                                                                                                                                                                                                                                                   | string &#124; undefined                                   | N/A           | No       |
-| httpHeaders      | Specifies headers needed when you are accessing a pdf from a url that requires authentication.                                                                                                                                                                                                                         | Record<string, string> &#124; undefined                   | N/A           | No       |
-| additionalParams | Additional `pdfjs` related parameters which you could add if necessary.                                                                                                                                                                                                                                                | AdditionalParameters &#124; undefined                     | N/A           | No       |
-| withAnnotations  | Specifies whether you'll like to attach annotations from the pages you load.                                                                                                                                                                                                                                           | boolean                                                   | False         | No       |
-| withTextContent  | Specifies whether you'll like to attach the text content from the pages you load.                                                                                                                                                                                                                                      | boolean                                                   | False         | No       |
-| scale            | Specifies how large you'll like your pdf to be displayed.                                                                                                                                                                                                                                                              | number (decimal)                                          | 1.0           | No       |
-| page             | On which page should the pdf open when it loads.                                                                                                                                                                                                                                                                       | number                                                    | 1             | No       |
-| rotation         | How much you'd like your pdf to be rotated.                                                                                                                                                                                                                                                                            | number                                                    | 0             | No       |
-| offsetX          | If specified, offsets the pdf on the X axis.                                                                                                                                                                                                                                                                           | number                                                    | 0             | No       |
-| offsetY          | If specified, offsets the pdf on the Y axis.                                                                                                                                                                                                                                                                           | number                                                    | 0             | No       |
-| style            | If specified, the styles are attached to the `canvas` element (_in which the pdf is loaded_).                                                                                                                                                                                                                          | string                                                    | ""            | No       |
+**NB: It's possible to pass more than one input source. The precedence of the sources is the following (`data` > `path` > `url`)**
+
+| Prop name | Description | Type | Default value | Required |
+| - | - | - | - | - |
+| url | A url leading to the pdf (e.g. _"https://my-domain.com/myPdf.pdf"_). **When loading PDF from a `url` there are some specifics to be considered. [Read more](#using-pdfs-from-links)**. | string &#124; URL &#124; undefined | N/A | No |
+| path | A path leading to the pdf (e.g. "./myPdf.pdf") | string &#124; undefined | N/A | No |
+| data | Provided when you want to specify a `pdf` either in binary form or a Base64 encoded pdf. When providing a Base64 encoded pdf use `atob` function to convert it to it's binary form when providing it in the `data` prop. | string &#124; number[] &#124; TypedArray &#124; undefined | N/A | No |
+| password | Specifies the password used to unlock protected pdf. | string &#124; undefined | N/A | No |
+| httpHeaders | Specifies headers needed when you are accessing a pdf from a url that requires authentication. | Record<string, string> &#124; undefined | N/A | No |
+| scale | Specifies how large you'll like your pdf to be displayed. | number (decimal) | 1.0 | No |
+| page | On which page should the pdf open when it loads. | number | 1 | No |
+| rotation | How much you'd like your pdf to be rotated. | number | 0 | No |
+| offsetX | If specified, offsets the pdf on the X axis. | number | 0 | No |
+| offsetY | If specified, offsets the pdf on the Y axis. | number | 0 | No |
+| rotation | If specified, sets the rotation of the each page of the pdf. | Degree | 0 | No |
+| withAnnotations  | Specifies whether you'll like to attach annotations from the pages you load. | boolean | False | No |
+| withTextContent  | Specifies whether you'll like to attach the text content from the pages you load. | boolean | False | No |
+| additionalParams | Additional `pdfjs` related parameters which you could add if necessary. | AdditionalParameters &#124; undefined | N/A | No |
+
+## Styling
+You can style the canvas in which the pdf is loaded by just passing `style` property to `PdfViewer`. `$$restProps` are passed down the to `canvas` element.
+
+```svelte
+<PdfViewer 
+  props={{path: "./myPdf.pdf"}} 
+  style="border: 1px solid black; display: block; margin-top: 10px;"/>
+```
 
 ## Handling
 
 | Function name        | Description                                            | Accepted parameter type |
 | -------------------- | ------------------------------------------------------ | ----------------------- |
-| `next/0`             | Moves to the next page of the PDF.                     | N/A                     |
-| `prev/0`             | Moves to the previous page of the PDF.                 | N/A                     |
+| `goToPage/0`         | Changes PDF to specified page.                         | N/A                     |
 | `resize/1`           | Resizes the PDF to the desired scale value.            | number (decimal)        |
+| `rotate/1`           | Rotate the PDF to the desired degree.                  | Degree                  |
 | `openWithPassword/1` | Tries to open a locked PDF with the provided password. | string                  |
 
 ## Dispatch Events
 
-| Event name           | Description                                                                                                                                           |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `next`               | Notifies when PDF moves to next page. This event also holds page `annotations` and `textContents` if they were requested in the `PdfViewer` props.    |
-| `prev`               | Notifies when PDF moves to previous page. This event also holds page `annotations` and `textContents` if they were requested in the `PdfViewer` props |
-| `load_success`       | Notifies that PDF is successfully loaded. _At this point in time the PDF should be visible on the screen_                                             |
-| `load_failure`       | Notifies that some `Error` has ocurred while loading the PDF.                                                                                         |
-| `password_required`  | Notifies that PDF is password protected and the user should provide a password to unlock the PDF.                                                     |
-| `incorrect_password` | Notifies that the provided password to unlock the PDF is incorrect.                                                                                   |
+| Event name | Description | Type |
+| - | - | - |
+| `page_changed` | Notifies when PDF changes page. This event also holds page `annotations` and `textContents` if they were requested in the `PdfViewer` props | PdfPageContent |
+| `load_success` | Notifies that PDF is successfully loaded. | PdfLoadSuccess |
+| `load_failure` | Notifies that some `Error` has ocurred while loading the PDF. | PdfLoadFailure |
+| `password_required` | Notifies that PDF is password protected and the user should provide a password to unlock the PDF. | void |
+| `incorrect_password` | Notifies that the provided password to unlock the PDF is incorrect. | void |
 
 ## Slots
 
-| Slot name           | Description                                                                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `loading`           | This slot is visible while the PDF is loading.                                                                                                          |
-| `loading-failed`    | This slot is visible if PDF has failed to load.                                                                                                         |
+| Slot name | Description |
+| - | - |
+| `loading` | This slot is visible while the PDF is loading. |
+| `loading-failed` | This slot is visible if PDF has failed to load. |
 | `password_required` | This slot is visible if the PDF requires a password to be unlocked. _This is a good spot to place an input form for specifying the password of the PDF_ |
 
 ## Demo example

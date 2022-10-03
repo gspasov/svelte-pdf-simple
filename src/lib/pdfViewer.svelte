@@ -1,141 +1,158 @@
 <script lang="ts">
-  import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
+  import * as pdfjs from "pdfjs-dist";
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
-  import type {
-    NextPage,
-    PdfLoadSuccess,
-    PdfLoadFailure,
-    PdfPageContent,
-    PrevPage,
-    PDFDocumentProxy,
-    PDFPageProxy,
-    TextContent,
-    AdditionalParameters,
-    TypedArray,
+  import {
+    type PdfLoadSuccess,
+    type PdfLoadFailure,
+    type PdfPageContent,
+    type PDFDocumentProxy,
+    type PDFPageProxy,
+    type TextContent,
+    type Degrees,
+    type Properties,
+    PdfExceptionName,
   } from "./types";
-  import { isPdfException, PasswordError, PdfExceptionType } from "./types";
+  import { parseError } from "./utils";
 
-  export let url: string | URL | undefined = undefined;
-  export let data: string | number[] | TypedArray | undefined = undefined;
-  export let httpHeaders: Record<string, string> | undefined = undefined;
-  export let password: string | undefined = undefined;
-  export let additionalParams: AdditionalParameters | undefined = undefined;
+  interface $$Slots {
+    loading: Record<string, unknown>;
+    password_required: Record<string, unknown>;
+    loading_failed: Record<string, unknown>;
+  }
 
-  export let page = 1;
-  export let scale = 1.0;
-  export let rotation = 0;
-  export let offsetX = 0;
-  export let offsetY = 0;
-  export let style = "";
-  export let withAnnotations = false;
-  export let withTextContent = false;
+  interface $$Events {
+    password_required: CustomEvent<void>;
+    incorrect_password: CustomEvent<void>;
+    load_success: CustomEvent<PdfLoadSuccess>;
+    load_failure: CustomEvent<PdfLoadFailure>;
+    page_changed: CustomEvent<PdfPageContent>;
+  }
 
-  export function next(): void {
-    if (page === pdfDoc.numPages) return;
-    page++;
-    renderPage(pdfDoc, page).then((pageContent): void => {
-      dispatchNext("next", pageContent);
+  export let props: Properties;
+
+  export async function goToPage(pageNumber: number): Promise<void> {
+    if (pageNumber > pdfDoc.numPages || pageNumber < 1) return;
+    return renderPage(pdfDoc, pageNumber).then((pageContent): void => {
+      dispatch("page_changed", pageContent);
     });
   }
 
-  export function prev(): void {
-    if (page === 1) return;
-    page--;
-    renderPage(pdfDoc, page).then((pageContent): void => {
-      dispatchPrev("prev", pageContent);
-    });
+  export async function resize(newScale: number): Promise<void> {
+    return fillCanvas(pdfPage, newScale, _props.rotation, _props.offsetX, _props.offsetY);
   }
 
-  export function resize(newScale: number): void {
-    fillCanvas(pdfPage, newScale, rotation, offsetX, offsetY);
+  export async function rotate(degrees: Degrees): Promise<void> {
+    return fillCanvas(pdfPage, _props.scale, degrees, _props.offsetX, _props.offsetY);
   }
 
-  export function openWithPassword(password: string): void {
-    (async () => await loadPdf(password))();
+  export async function openWithPassword(password: string): Promise<void> {
+    return loadPdf(password);
   }
 
   let canvas: HTMLCanvasElement;
   let pdfDoc: PDFDocumentProxy;
   let pdfPage: PDFPageProxy;
+  let _props: Properties = {
+    page: 1,
+    scale: 1.0,
+    rotation: 0,
+    offsetX: 0,
+    offsetY: 0,
+    withAnnotations: false,
+    withTextContent: false,
+    ...props,
+  };
   $: isPdfLoading = true;
   $: isPdfLoadSuccess = false;
   $: isPdfLoadFailure = false;
   $: isPdfPageRenderSuccess = false;
   $: isPdfPasswordProtected = false;
 
-  const dispatchLoadSuccess = createEventDispatcher<PdfLoadSuccess>();
-  const dispatchLoadFailure = createEventDispatcher<PdfLoadFailure>();
-  const dispatchNext = createEventDispatcher<NextPage>();
-  const dispatchPrev = createEventDispatcher<PrevPage>();
   const dispatch = createEventDispatcher();
 
-  GlobalWorkerOptions.workerSrc =
+  pdfjs.GlobalWorkerOptions.workerSrc =
     "https://unpkg.com/pdfjs-dist@2.13.216/legacy/build/pdf.worker.min.js";
 
   onMount(async () => {
-    if (url === undefined && data === undefined) {
-      throw new Error("PdfViewer failed to initialize with error: 'No pdf source provided'");
+    if (_props.url === undefined && _props.data === undefined && _props.path === undefined) {
+      isPdfLoadFailure = true;
+      console.warn("[svelte-pdf-simple] Missing pdf data source.");
     }
     await loadPdf();
   });
 
+  function getPageRotation(pdfPageInfo: unknown): Degrees | null {
+    const key = "rotate";
+    if (
+      typeof pdfPageInfo === "object" &&
+      pdfPageInfo !== null &&
+      Object.prototype.hasOwnProperty.call(pdfPageInfo, key) &&
+      typeof pdfPageInfo[key] === "number"
+    ) {
+      return pdfPageInfo[key] as Degrees;
+    }
+
+    return null;
+  }
+
   async function renderPage(doc: PDFDocumentProxy, pageNumber: number): Promise<PdfPageContent> {
     pdfPage = await doc.getPage(pageNumber);
 
-    let annotations: Record<string, unknown>[] | undefined = undefined;
-    let textContent: TextContent | undefined = undefined;
-    if (withAnnotations) {
-      annotations = Object.values(await pdfPage.getAnnotations());
+    let annotations: Record<string, unknown>[];
+    let textContent: TextContent;
+    if (_props.withAnnotations) {
+      annotations = await pdfPage.getAnnotations();
     }
-    if (withTextContent) {
+    if (_props.withTextContent) {
       textContent = await pdfPage.getTextContent();
     }
-    fillCanvas(pdfPage, scale, rotation, offsetX, offsetY);
+    await fillCanvas(pdfPage, _props.scale, _props.rotation, _props.offsetX, _props.offsetY);
 
-    return { annotations, textContent };
+    const pageRotation = getPageRotation(pdfPage._pageInfo);
+    return {
+      ...(annotations != null && { annotations }),
+      ...(textContent != null && { textContent }),
+      ...(pageRotation != null && { pageRotation }),
+      pageNumber,
+    };
   }
 
-  async function loadPdf(pwd: string | undefined = undefined): Promise<void> {
+  async function loadPdf(pwd?: string): Promise<void> {
     try {
-      pdfDoc = await getDocument({
-        ...(url && { url }),
-        ...(data && { data }),
-        ...(httpHeaders && { httpHeaders }),
-        ...(password && { password }),
+      pdfDoc = await pdfjs.getDocument({
+        ...(_props.url && { url: _props.url }),
+        ...(_props.path && { url: _props.path }),
+        ...(_props.data && { data: _props.data }),
+        ...(_props.httpHeaders && { httpHeaders: _props.httpHeaders }),
+        ...(_props.password && { password: _props.password }),
         ...(pwd && { password: pwd }),
-        ...(additionalParams && { ...additionalParams }),
+        ...(_props.additionalParams && { ..._props.additionalParams }),
+        standardFontDataUrl:
+          _props.additionalParams?.standardFontDataUrl ??
+          "https://mozilla.github.io/pdf.js/web/standard_fonts/",
       }).promise;
 
       isPdfLoadSuccess = true;
-      const pageContent = await renderPage(pdfDoc, page);
+      const pageContent = await renderPage(pdfDoc, _props.page);
+      isPdfPageRenderSuccess = true;
 
-      dispatchLoadSuccess("load_success", { pages: pdfDoc.numPages, ...pageContent });
+      dispatch("load_success", { totalPages: pdfDoc.numPages, ...pageContent });
     } catch (error: unknown) {
-      if (isPdfException(error)) {
-        if (
-          error.name === PdfExceptionType.PasswordException &&
-          error.message === PasswordError.PasswordRequired
-        ) {
+      const parsedError = parseError(error);
+      switch (parsedError.name) {
+        case PdfExceptionName.PasswordRequiredException: {
           isPdfPasswordProtected = true;
           dispatch("password_required");
           return;
-        } else if (
-          error.name === PdfExceptionType.PasswordException &&
-          error.message === PasswordError.IncorrectPassword
-        ) {
+        }
+        case PdfExceptionName.IncorrectPasswordException: {
           dispatch("incorrect_password");
           return;
         }
-        dispatchLoadFailure("load_failure", {
-          message: error.message,
-          name: error.name,
-          code: error.code,
-        });
-      } else if (error instanceof Error) {
-        dispatchLoadFailure("load_failure", error);
-      } else {
-        dispatchLoadFailure("load_failure", JSON.stringify(error));
+        default: {
+          dispatch("load_failure", parsedError);
+        }
       }
       isPdfLoadFailure = true;
       isPdfLoadSuccess = false;
@@ -150,23 +167,21 @@
     rotation: number,
     offsetX: number,
     offsetY: number,
-  ): void {
-    const viewport = page.getViewport({ scale, rotation, offsetX, offsetY });
+  ): Promise<void> {
+    const pageRotation = rotation + getPageRotation(page._pageInfo);
+    const canvasContext = canvas.getContext("2d");
+    const viewport = page.getViewport({ scale, rotation: pageRotation, offsetX, offsetY });
     canvas.height = viewport.height;
     canvas.width = viewport.width;
 
-    const canvasContext = canvas.getContext("2d");
-    pdfPage.render({ canvasContext, viewport });
-    if (canvasContext !== null) {
-      isPdfPageRenderSuccess = true;
-    }
+    return pdfPage.render({ canvasContext, viewport }).promise;
   }
 </script>
 
 {#if isPdfLoadSuccess}
   <canvas
     class:show={isPdfPageRenderSuccess}
-    style={isPdfPageRenderSuccess && style}
+    {...isPdfPageRenderSuccess && { ...$$restProps }}
     bind:this={canvas}
   />
 {/if}
@@ -174,9 +189,9 @@
   {#if isPdfLoading}
     <slot name="loading" />
   {:else if isPdfPasswordProtected}
-    <slot name="password-required" />
+    <slot name="password_required" />
   {:else if isPdfLoadFailure}
-    <slot name="loading-failed" />
+    <slot name="loading_failed" />
   {/if}
 {/if}
 

@@ -1,10 +1,6 @@
 <script lang="ts">
   import { PdfViewer } from "svelte-pdf-simple";
-  import type {
-    PdfLoadFailureContent,
-    PdfLoadSuccessContent,
-    PdfPageContent,
-  } from "svelte-pdf-simple";
+  import type { PdfLoadSuccess, PdfPageContent, Degrees, PdfException } from "svelte-pdf-simple";
 
   let pdfViewer: PdfViewer;
   let pageNumber = 0;
@@ -12,6 +8,7 @@
   let isPdfLoaded = false;
   let password = "";
   let scale = 1.5;
+  let rotation: Degrees = 0;
 
   const pdfPathWithPassword = "./exampleProtected.pdf";
   const pdfPathWithForm = "./formExample.pdf";
@@ -34,69 +31,73 @@
       "dCAxIDAgUgo+PgpzdGFydHhyZWYKNDkyCiUlRU9G",
   );
 
-  function handleNextPage(event: CustomEvent<PdfPageContent>): void {
-    console.info("next", event.detail);
-    pageNumber++;
+  function handlePageChanged(event: CustomEvent<PdfPageContent>): void {
+    console.info("page changed", event.detail);
+    pageNumber = event.detail.pageNumber;
   }
 
-  function handlePrevPage(event: CustomEvent<PdfPageContent>): void {
-    console.info("prev", event.detail);
-    pageNumber--;
+  function goToPage(page: number): void {
+    pdfViewer.goToPage(page);
   }
 
-  function onNextPage(): void {
-    pdfViewer.next();
-  }
-
-  function onPrevPage(): void {
-    pdfViewer.prev();
-  }
-
-  function onZoomIn(): void {
+  function zoomIn(): void {
     scale += 0.1;
     pdfViewer.resize(scale);
   }
 
-  function onZoomOut(): void {
+  function zoomOut(): void {
     scale -= 0.1;
     pdfViewer.resize(scale);
   }
 
-  function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccessContent>) {
+  function rotateLeft(): void {
+    rotation -= 90;
+    pdfViewer.rotate(rotation as Degrees);
+  }
+
+  function rotateRight(): void {
+    rotation += 90;
+    pdfViewer.rotate(rotation as Degrees);
+  }
+
+  function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccess>) {
     console.info("loaded", event.detail);
-    totalPages = event.detail.pages;
+    totalPages = event.detail.totalPages;
     pageNumber = 1;
     isPdfLoaded = true;
   }
 
-  function handleLoadFailure(event: CustomEvent<PdfLoadFailureContent>) {
+  function handleLoadFailure(event: CustomEvent<PdfException>) {
     console.info("failed", event.detail);
   }
 </script>
 
 <main>
   {#if isPdfLoaded}
-    <button on:click={onPrevPage}>prev</button>
-    <button on:click={onNextPage}>next</button>
+    <button on:click={() => goToPage(pageNumber - 1)}>prev</button>
+    <button on:click={() => goToPage(pageNumber + 1)}>next</button>
     <span>{pageNumber}/{totalPages}</span>
-    <button on:click={onZoomIn}>zoom in</button>
-    <button on:click={onZoomOut}>zoom out</button>
+    <button on:click={zoomIn}>zoom in</button>
+    <button on:click={zoomOut}>zoom out</button>
+    <button on:click={rotateLeft}>rotate left</button>
+    <button on:click={rotateRight}>rotate right</button>
   {/if}
   <PdfViewer
     bind:this={pdfViewer}
-    url={pdfPathWithPassword}
-    {scale}
-    style={"border: 1px solid black; display: block; margin-top: 10px;"}
-    withAnnotations={true}
-    withTextContent={true}
+    props={{
+      path: pdfPathWithPassword,
+      scale,
+      withAnnotations: true,
+      withTextContent: true,
+    }}
+    style="border: 1px solid black; display: block; margin-top: 10px;"
     on:load_success={handleLoadedSuccess}
     on:load_failure={handleLoadFailure}
-    on:next={handleNextPage}
-    on:prev={handlePrevPage}
+    on:page_changed={handlePageChanged}
   >
     <svelte:fragment slot="loading">Loading pdf..</svelte:fragment>
-    <svelte:fragment slot="loading-failed">Well... something went wrong :(</svelte:fragment>
-    <svelte:fragment slot="password-required">
+    <svelte:fragment slot="loading_failed">Well... something went wrong :(</svelte:fragment>
+    <svelte:fragment slot="password_required">
       <p>This pdf is password protected. Please enter the password to view it.</p>
       <input type="password" bind:value={password} />
       <button on:click={() => pdfViewer.openWithPassword(password)}>unlock</button>
