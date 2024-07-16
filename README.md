@@ -89,16 +89,19 @@ With `Base64` encoded string:
   let password = "";
 
 
-  function goToPage(page: number): void {
-    pdfViewer.goToPage(page);
+  function navigatePages(forward: boolean = false): void {
+      forward 
+          ? (pageNumber === totalPages ? pageNumber = 1 : pageNumber++)
+          : (pageNumber === 1 ? pageNumber = totalPages : pageNumber--);
+      pdfViewer.goToPage(pageNumber);
   }
 
   function handlePageChanged(event: CustomEvent<PdfPageContent>): void {
-    pageNumber = event.details.pageNumber;
+    pageNumber = event.detail.pageNumber;
   }
 
   function handleLoadedSuccess(event: CustomEvent<PdfLoadSuccessContent>) {
-    totalPages = event.detail.pages;
+    totalPages = event.detail.totalPages;
     pageNumber = 1;
     isPdfLoaded = true;
   }
@@ -110,8 +113,8 @@ With `Base64` encoded string:
 
 <main>
   {#if isPdfLoaded}
-    <button on:click={() => goToPage(pageNumber - 1)}>prev</button>
-    <button on:click={() => goToPage(pageNumber + 1)}>next</button>
+    <button on:click={_ => navigatePages(false)}>prev</button>
+    <button on:click={_ => navigatePages(true)}>next</button>
     <span>{pageNumber}/{totalPages}</span>
   {/if}
   <PdfViewer
